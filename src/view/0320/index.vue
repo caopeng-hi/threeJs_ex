@@ -30,6 +30,7 @@ var shapes = [],
   perlin = new Noise(),
   iteration = 0,
   params = { speed: 1, perlinVariation: 0.3, perlinAmp: 2 };
+let gui;
 onMounted(() => {
   init();
   animate();
@@ -55,13 +56,21 @@ const init = () => {
   canvasRef.value.appendChild(renderer.domElement);
   controls = new OrbitControls(camera, renderer.domElement);
   const count = 5000;
+  const geometry = new THREE.BufferGeometry();
+  const material = new THREE.PointsMaterial({
+    size: 0.002,
+    sizeAttenuation: true,
+  });
+  // 设置顶点数据
+  const positions = new Float32Array([0, 0, 0]);
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   for (let i = 0; i < count; i++) {
-    const point = new Point(i);
+    const point = new Point(geometry, material);
     shapes.push(point);
     group.add(point.point);
   }
   scene.add(group);
-  var gui;
+
   gui = new GUI();
   gui.add(params, "speed").min(0.1).max(2).step(0.1).name("Speed");
   gui
@@ -76,7 +85,6 @@ const init = () => {
 const animate = () => {
   iteration++;
   changeColor();
-  // 遍历group
   for (let i = 0; i < shapes.length; i++) {
     const point = shapes[i];
     point.move();
@@ -92,22 +100,11 @@ class Point {
   speed;
   geometry;
   material;
-  constructor(id) {
-    this.id = id; // 粒子id
-    this.speed = Math.floor(Math.random() * 100) / 100;
-    this.geometry = new THREE.BufferGeometry();
-    this.material = new THREE.PointsMaterial({
-      size: 0.002,
-      sizeAttenuation: true,
-    });
-    // 设置顶点数据
-    const positions = new Float32Array([0, 0, 0]);
-    this.geometry.setAttribute(
-      "position",
-      new THREE.BufferAttribute(positions, 3)
-    );
-    this.point = new THREE.Points(this.geometry, this.material);
-    this.dist = 5;
+  constructor(geometry, material, dist = 5) {
+    this.geometry = geometry;
+    this.material = material;
+    this.point = new THREE.Points(geometry, material);
+    this.dist = dist;
     this.u = Math.random();
     this.v = Math.random();
     var theta = 2 * Math.PI * this.u; // 生成球面坐标
