@@ -12,8 +12,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "noisejs": "^2.1.0",
     "reset.css": "^2.0.2",
     "scss": "^0.2.4",
+    "simplex-noise": "^4.0.3",
     "three": "^0.174.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
