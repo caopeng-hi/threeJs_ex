@@ -33,6 +33,11 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
 // 引入OutlinePass
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
+// 引入后期处理着色器
+import comVertexShader from "../../shader/0322/comVert.glsl?raw";
+import comFragmentShader from "../../shader/0322/comFrag.glsl?raw";
+import vignVertexShader from "../../shader/0322/vignVert.glsl?raw";
+import vignFragmentShader from "../../shader/0322/vignFrag.glsl?raw";
 
 const contentRef = ref(null);
 let scene, camera, renderer, controls, clock, particleField, rayParticles;
@@ -110,8 +115,8 @@ const init = () => {
       amount: { value: 0.003 },
       time: { value: 0 },
     },
-    vertexShader: `   varying vec2 vUv; void main() {  vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);  }  `,
-    fragmentShader: `  uniform sampler2D tDiffuse;  uniform float amount; uniform float time;  varying vec2 vUv; void main() { float  aberrationAmount = amount * (0.8 + sin(time * 1.2) * 0.2); float angle = time * 0.2;  vec2 dir = vec2(cos(angle), sin(angle)) * aberrationAmount;  vec4 colorR = texture2D(tDiffuse, vUv + dir);  vec4 colorG = exture2D(tDiffuse, vUv);  vec4 colorB = texture2D(tDiffuse, vUv - dir); gl_FragColor = vec4(colorR.r, colorG.g, colorB.b, 1.0);  }  `,
+    vertexShader: comVertexShader,
+    fragmentShader: comFragmentShader,
   };
   const chromaticAberrationPass = new ShaderPass(chromaticAberrationShader);
   composer.addPass(chromaticAberrationPass);
@@ -121,8 +126,8 @@ const init = () => {
       darkness: { value: 1.2 },
       offset: { value: 0.9 },
     },
-    vertexShader: ` varying vec2 vUv;void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }  `,
-    fragmentShader: `uniform sampler2D tDiffuse; uniform float darkness;  uniform float offset;    varying vec2 vUv; void main() {  vec4 color =  texture2D(tDiffuse, vUv);  vec2 uv = (vUv - 0.5) * 2.0; float vignetteAmount = smoothstep(offset, offset - 0.05, length(uv)); color.rgb *= mix(1.0, darkness, 1.0 - vignetteAmount);  gl_FragColor = color;  } `,
+    vertexShader: vignVertexShader,
+    fragmentShader: vignFragmentShader,
   };
   composer.addPass(new ShaderPass(vignetteShader));
   composer.addPass(new OutputPass());
@@ -207,6 +212,14 @@ const animate = () => {
     rayParticles.geometry.attributes.position.needsUpdate = true;
     rayParticles.geometry.attributes.lifeProgress.needsUpdate = true;
   }
+  // 后期处理动画
+  composer.passes.forEach((pass) => {
+    if (pass.uniforms && pass.uniforms.time !== undefined) {
+      pass.uniforms.time.value = time;
+    }
+  });
+  composer.render();
+  controls.update();
 };
 // 创建几何体
 const createPrism = () => {
