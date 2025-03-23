@@ -40,6 +40,7 @@ let prismCore = new THREE.Group();
 let energyVeins = new THREE.Group();
 let crystalShards = new THREE.Group();
 let rayParticleCount = 1000;
+let targetRotation = new THREE.Vector2(0, 0);
 let composer;
 onMounted(() => {
   init();
@@ -48,6 +49,7 @@ onMounted(() => {
 const init = () => {
   // 创建场景
   scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
   // 添加坐标辅助线
   const axesHelper = new THREE.AxesHelper(5);
   scene.add(axesHelper);
@@ -98,13 +100,13 @@ const init = () => {
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
     uniforms: {
-      time: { value: 0 },
-      mouseInfluence: { value: new THREE.Vector2(0, 0) },
+      uTime: { value: 0 },
+      uMouseInfluence: { value: new THREE.Vector2(0, 0) },
     },
     side: THREE.DoubleSide,
   });
   // 创建网格
-  for (let i = 0; i < 1; i++) {
+  for (let i = 0; i < 8; i++) {
     const prism = new THREE.Mesh(prismGeometry, prismMaterial);
     prism.rotation.y = (i / 8) * Math.PI * 2;
     prism.rotation.z = Math.PI / 4;
@@ -321,7 +323,7 @@ const init = () => {
       darkness: { value: 1.2 },
       offset: { value: 0.9 },
     },
-    vertexShader: ` varying vec2 vUv;void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }  `,
+    vertexShader: ` varying vec2 vUv;void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }  `,
     fragmentShader: `uniform sampler2D tDiffuse; uniform float darkness;  uniform float offset;    varying vec2 vUv; void main() {  vec4 color =  texture2D(tDiffuse, vUv);  vec2 uv = (vUv - 0.5) * 2.0; float vignetteAmount = smoothstep(offset, offset - 0.05, length(uv)); color.rgb *= mix(1.0, darkness, 1.0 - vignetteAmount);  gl_FragColor = color;  } `,
   };
   composer.addPass(new ShaderPass(vignetteShader));
@@ -330,6 +332,11 @@ const init = () => {
 const animate = () => {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
+  const time = clock.getElapsedTime();
+  prismCore.children.forEach((prism) => {
+    prism.material.uniforms.uTime.value = time;
+    prism.material.uniforms.uMouseInfluence.value.lerp(targetRotation, 0.05);
+  });
 };
 const createSpline = () => {
   const points = [];
@@ -366,4 +373,12 @@ const createShardMaterial = (hue) => {
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.contentRfef {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  background-color: #000;
+}
+</style>
