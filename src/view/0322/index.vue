@@ -51,8 +51,8 @@ const init = () => {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
   // 添加坐标辅助线
-  const axesHelper = new THREE.AxesHelper(5);
-  scene.add(axesHelper);
+  // const axesHelper = new THREE.AxesHelper(5);
+  // scene.add(axesHelper);
   // 增减指数雾气
   scene.fog = new THREE.FogExp2(0x000000, 0.035);
   // 创建相机
@@ -94,33 +94,6 @@ const init = () => {
   pointLight2.position.set(-2, -1, 1);
   scene.add(pointLight2);
 
-  // 创建管道
-  const veinGeometry = new THREE.TubeGeometry(
-    createSpline(),
-    64,
-    0.08,
-    8,
-    false
-  );
-  // 创建管道材质材质
-  const veinMaterial = new THREE.ShaderMaterial({
-    vertexShader: veinVertexShader,
-    fragmentShader: veinFragmentShader,
-    uniforms: {
-      uTime: { value: 0 },
-      uMouseInfluence: { value: new THREE.Vector2(0, 0) },
-    },
-    side: THREE.DoubleSide,
-  });
-  for (let i = 0; i < 16; i++) {
-    const vein = new THREE.Mesh(veinGeometry, veinMaterial);
-    vein.rotation.y = (i / 16) * Math.PI * 2;
-    vein.scale.set(0.9 + Math.random() * 0.2, 1, 0.9 + Math.random() * 0.2);
-    vein.userData = { pulseOffset: Math.random() * Math.PI * 2 };
-    energyVeins.add(vein);
-  }
-  // 添加扭结几何体
-  scene.add(energyVeins);
   // 创建粒子
   const shardGeometries = [
     new THREE.OctahedronGeometry(0.1, 0), // 八面体
@@ -349,6 +322,36 @@ const createPrism = () => {
     prismCore.add(prism);
   }
   scene.add(prismCore);
+};
+// 创建管道
+const createVein = () => {
+  // 创建管道
+  const veinGeometry = new THREE.TubeGeometry(
+    createSpline(),
+    64,
+    0.08,
+    8,
+    false
+  );
+  // 创建管道材质材质
+  const veinMaterial = new THREE.ShaderMaterial({
+    vertexShader: veinVertexShader,
+    fragmentShader: veinFragmentShader,
+    uniforms: {
+      uTime: { value: 0 },
+      uMouseInfluence: { value: new THREE.Vector2(0, 0) },
+    },
+    side: THREE.DoubleSide,
+  });
+  for (let i = 0; i < 16; i++) {
+    const vein = new THREE.Mesh(veinGeometry, veinMaterial);
+    vein.rotation.y = (i / 16) * Math.PI * 2;
+    vein.scale.set(0.9 + Math.random() * 0.2, 1, 0.9 + Math.random() * 0.2);
+    vein.userData = { pulseOffset: Math.random() * Math.PI * 2 };
+    energyVeins.add(vein);
+  }
+  // 添加扭结几何体
+  scene.add(energyVeins);
 };
 const createSpline = () => {
   const points = [];
