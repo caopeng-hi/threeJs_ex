@@ -40,7 +40,14 @@ import vignVertexShader from "../../shader/0322/vignVert.glsl?raw";
 import vignFragmentShader from "../../shader/0322/vignFrag.glsl?raw";
 
 const contentRef = ref(null);
-let scene, camera, renderer, controls, clock, particleField, rayParticles;
+let scene,
+  camera,
+  renderer,
+  controls,
+  clock,
+  particleField,
+  rayParticles,
+  pointLight;
 let prismCore = new THREE.Group();
 let energyVeins = new THREE.Group();
 let crystalShards = new THREE.Group();
@@ -92,13 +99,18 @@ const init = () => {
   const hemisphereLight = new THREE.HemisphereLight(0x606090, 0x080820, 0.5);
   scene.add(hemisphereLight);
   // 添加点光源
-  const pointLight = new THREE.PointLight(0xffa0e0, 2.5, 10);
+  pointLight = new THREE.PointLight(0xffa0e0, 2.5, 10);
   pointLight.position.set(1.5, 1.5, 1.5);
   // 添加点光源2
   const pointLight2 = new THREE.PointLight(0x80c0ff, 1.8, 8);
   pointLight2.position.set(-2, -1, 1);
   scene.add(pointLight2);
 
+  createPrism();
+  createVein();
+  createShard();
+  createCrystal();
+  createRayParticles();
   // 合成效果
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
@@ -218,6 +230,17 @@ const animate = () => {
       pass.uniforms.time.value = time;
     }
   });
+
+  // 调整整体动画
+  prismCore.rotation.y += 0.005;
+  prismCore.rotation.x = targetRotation.y * 0.1;
+  energyVeins.rotation.y -= 0.008;
+  energyVeins.rotation.x = -targetRotation.y * 0.05;
+  pointLight.position.set(
+    1.5 * Math.sin(time * 0.6),
+    1.5 + Math.cos(time * 0.5) * 0.5,
+    1.5 * Math.cos(time * 0.7)
+  );
   composer.render();
   controls.update();
 };
