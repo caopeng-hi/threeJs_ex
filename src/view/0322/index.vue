@@ -94,116 +94,6 @@ const init = () => {
   pointLight2.position.set(-2, -1, 1);
   scene.add(pointLight2);
 
-  //添加粒子几何体
-  const particleCount = 5000;
-  const particlesGeometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(particleCount * 3);
-  const colors = new Float32Array(particleCount * 3);
-  const sizes = new Float32Array(particleCount);
-
-  for (let i = 0; i < particleCount; i++) {
-    const i3 = i * 3;
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.random() * Math.PI * 2;
-    const torusRadius = 2;
-    const tubeRadius = 0.8;
-    positions[i3] =
-      (torusRadius + tubeRadius * Math.cos(phi)) * Math.cos(theta);
-    positions[i3 + 1] = tubeRadius * Math.sin(phi);
-    positions[i3 + 2] =
-      (torusRadius + tubeRadius * Math.cos(phi)) * Math.sin(theta);
-    const hue = (theta / (Math.PI * 2)) * 0.7 + 0.2;
-    const sat = 0.6 + Math.random() * 0.4;
-    const light = 0.6 + Math.random() * 0.4;
-    const color = new THREE.Color().setHSL(hue, sat, light);
-    colors[i3] = color.r;
-    colors[i3 + 1] = color.g;
-    colors[i3 + 2] = color.b;
-    sizes[i] = 0.02 + Math.random() * 0.04;
-  }
-  particlesGeometry.setAttribute(
-    "position",
-    new THREE.BufferAttribute(positions, 3)
-  );
-  particlesGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  particlesGeometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
-  // 创建粒子材质
-  const particleMaterial = new THREE.ShaderMaterial({
-    vertexShader: partVertexShader,
-    fragmentShader: partFragmentShader,
-    uniforms: { uTime: { value: 0 } },
-    transparent: true,
-    vertexColors: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  // 创建粒子场
-  particleField = new THREE.Points(particlesGeometry, particleMaterial);
-  scene.add(particleField);
-
-  // 创建射线几何体
-  const rayGeometry = new THREE.BufferGeometry();
-  const rayPositions = new Float32Array(rayParticleCount * 3);
-  const rayColors = new Float32Array(rayParticleCount * 3);
-  const raySizes = new Float32Array(rayParticleCount);
-  const rayVelocities = new Float32Array(rayParticleCount * 3);
-  const rayLifeProgress = new Float32Array(rayParticleCount);
-  for (let i = 0; i < rayParticleCount; i++) {
-    const i3 = i * 3;
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.random() * Math.PI;
-    const radius = 1.2;
-    rayPositions[i3] = Math.sin(phi) * Math.cos(theta) * radius;
-    rayPositions[i3 + 1] = Math.sin(phi) * Math.sin(theta) * radius;
-    rayPositions[i3 + 2] = Math.cos(phi) * radius;
-    const vel = new THREE.Vector3(
-      rayPositions[i3],
-      rayPositions[i3 + 1],
-      rayPositions[i3 + 2]
-    )
-      .normalize()
-      .multiplyScalar(0.05 + Math.random() * 0.03);
-    rayVelocities[i3] = vel.x;
-    rayVelocities[i3 + 1] = vel.y;
-    rayVelocities[i3 + 2] = vel.z;
-    const t = Math.random();
-    const emberColor = new THREE.Color().lerpColors(
-      new THREE.Color(1.0, 0.1, 0.0),
-      new THREE.Color(1.0, 1.0, 0.2),
-      t
-    );
-    rayColors[i3] = emberColor.r;
-    rayColors[i3 + 1] = emberColor.g;
-    rayColors[i3 + 2] = emberColor.b;
-    raySizes[i] = 0.08 + Math.random() * 0.06;
-    rayLifeProgress[i] = Math.random();
-  }
-  rayGeometry.setAttribute(
-    "position",
-    new THREE.BufferAttribute(rayPositions, 3)
-  );
-  rayGeometry.setAttribute("color", new THREE.BufferAttribute(rayColors, 3));
-  rayGeometry.setAttribute("size", new THREE.BufferAttribute(raySizes, 1));
-  rayGeometry.setAttribute(
-    "velocity",
-    new THREE.BufferAttribute(rayVelocities, 3)
-  );
-  rayGeometry.setAttribute(
-    "lifeProgress",
-    new THREE.BufferAttribute(rayLifeProgress, 1)
-  );
-  // 创建射线材质
-  const rayMaterial = new THREE.ShaderMaterial({
-    vertexShader: rayVertexShader,
-    fragmentShader: rayFragmentShader,
-    uniforms: { time: { value: 0 } },
-    transparent: true,
-    vertexColors: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  rayParticles = new THREE.Points(rayGeometry, rayMaterial);
-  scene.add(rayParticles);
   // 合成效果
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
@@ -274,6 +164,49 @@ const animate = () => {
     shard.rotation.z += 0.01;
     shard.scale.setScalar((0.8 + Math.random() * 0.4) * pulse);
   });
+  // 粒子动画
+  if (particleField) {
+    particleField.material.uniforms.uTime.value = time;
+    const positions = particleField.geometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i += 3) {
+      const theta = Math.atan2(positions[i + 2], positions[i]) + 0.003;
+      const radius = Math.sqrt(
+        positions[i] * positions[i] + positions[i + 2] * positions[i + 2]
+      );
+      positions[i] = Math.cos(theta) * radius;
+      positions[i + 2] = Math.sin(theta) * radius;
+      positions[i + 1] += Math.sin(time + radius * 2) * 0.003;
+      if (Math.abs(positions[i + 1]) > 1.25) {
+        positions[i + 1] *= -0.8;
+      }
+    }
+    particleField.geometry.attributes.position.needsUpdate = true;
+  }
+  // 射线动画
+  if (rayParticles) {
+    rayParticles.material.uniforms.uTime.value = time;
+    const rayPositions = rayParticles.geometry.attributes.position.array;
+    const rayVelocities = rayParticles.geometry.attributes.velocity.array;
+    const rayLifeProgress = rayParticles.geometry.attributes.lifeProgress.array;
+    for (let i = 0; i < rayParticleCount; i++) {
+      const i3 = i * 3;
+      rayLifeProgress[i] = (rayLifeProgress[i] + 0.016) % 1.0;
+      if (rayLifeProgress[i] < 0.016) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        const radius = 1.2;
+        rayPositions[i3] = Math.sin(phi) * Math.cos(theta) * radius;
+        rayPositions[i3 + 1] = Math.sin(phi) * Math.sin(theta) * radius;
+        rayPositions[i3 + 2] = Math.cos(phi) * radius;
+      } else {
+        rayPositions[i3] += rayVelocities[i3];
+        rayPositions[i3 + 1] += rayVelocities[i3 + 1];
+        rayPositions[i3 + 2] += rayVelocities[i3 + 2];
+      }
+    }
+    rayParticles.geometry.attributes.position.needsUpdate = true;
+    rayParticles.geometry.attributes.lifeProgress.needsUpdate = true;
+  }
 };
 // 创建几何体
 const createPrism = () => {
@@ -375,6 +308,121 @@ const createShard = () => {
     crystalShards.add(shard);
   }
   scene.add(crystalShards);
+};
+// 创建水晶碎片
+const createCrystal = () => {
+  //添加粒子几何体
+  const particleCount = 5000;
+  const particlesGeometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+  const sizes = new Float32Array(particleCount);
+
+  for (let i = 0; i < particleCount; i++) {
+    const i3 = i * 3;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI * 2;
+    const torusRadius = 2;
+    const tubeRadius = 0.8;
+    positions[i3] =
+      (torusRadius + tubeRadius * Math.cos(phi)) * Math.cos(theta);
+    positions[i3 + 1] = tubeRadius * Math.sin(phi);
+    positions[i3 + 2] =
+      (torusRadius + tubeRadius * Math.cos(phi)) * Math.sin(theta);
+    const hue = (theta / (Math.PI * 2)) * 0.7 + 0.2;
+    const sat = 0.6 + Math.random() * 0.4;
+    const light = 0.6 + Math.random() * 0.4;
+    const color = new THREE.Color().setHSL(hue, sat, light);
+    colors[i3] = color.r;
+    colors[i3 + 1] = color.g;
+    colors[i3 + 2] = color.b;
+    sizes[i] = 0.02 + Math.random() * 0.04;
+  }
+  particlesGeometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(positions, 3)
+  );
+  particlesGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  particlesGeometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+  // 创建粒子材质
+  const particleMaterial = new THREE.ShaderMaterial({
+    vertexShader: partVertexShader,
+    fragmentShader: partFragmentShader,
+    uniforms: { uTime: { value: 0 } },
+    transparent: true,
+    vertexColors: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  // 创建粒子场
+  particleField = new THREE.Points(particlesGeometry, particleMaterial);
+  scene.add(particleField);
+};
+// 创建粒子场
+const createRayParticles = () => {
+  // 创建射线几何体
+  const rayGeometry = new THREE.BufferGeometry();
+  const rayPositions = new Float32Array(rayParticleCount * 3);
+  const rayColors = new Float32Array(rayParticleCount * 3);
+  const raySizes = new Float32Array(rayParticleCount);
+  const rayVelocities = new Float32Array(rayParticleCount * 3);
+  const rayLifeProgress = new Float32Array(rayParticleCount);
+  for (let i = 0; i < rayParticleCount; i++) {
+    const i3 = i * 3;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI;
+    const radius = 1.2;
+    rayPositions[i3] = Math.sin(phi) * Math.cos(theta) * radius;
+    rayPositions[i3 + 1] = Math.sin(phi) * Math.sin(theta) * radius;
+    rayPositions[i3 + 2] = Math.cos(phi) * radius;
+    const vel = new THREE.Vector3(
+      rayPositions[i3],
+      rayPositions[i3 + 1],
+      rayPositions[i3 + 2]
+    )
+      .normalize()
+      .multiplyScalar(0.05 + Math.random() * 0.03);
+    rayVelocities[i3] = vel.x;
+    rayVelocities[i3 + 1] = vel.y;
+    rayVelocities[i3 + 2] = vel.z;
+    const t = Math.random();
+    const emberColor = new THREE.Color().lerpColors(
+      new THREE.Color(1.0, 0.1, 0.0),
+      new THREE.Color(1.0, 1.0, 0.2),
+      t
+    );
+    rayColors[i3] = emberColor.r;
+    rayColors[i3 + 1] = emberColor.g;
+    rayColors[i3 + 2] = emberColor.b;
+    raySizes[i] = 0.08 + Math.random() * 0.06;
+    rayLifeProgress[i] = Math.random();
+  }
+  rayGeometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(rayPositions, 3)
+  );
+  rayGeometry.setAttribute("color", new THREE.BufferAttribute(rayColors, 3));
+  rayGeometry.setAttribute("size", new THREE.BufferAttribute(raySizes, 1));
+  rayGeometry.setAttribute(
+    "velocity",
+    new THREE.BufferAttribute(rayVelocities, 3)
+  );
+  rayGeometry.setAttribute(
+    "lifeProgress",
+    new THREE.BufferAttribute(rayLifeProgress, 1)
+  );
+  // 创建射线材质
+  const rayMaterial = new THREE.ShaderMaterial({
+    vertexShader: rayVertexShader,
+    fragmentShader: rayFragmentShader,
+    uniforms: { uTime: { value: 0 } },
+    transparent: true,
+    vertexColors: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  rayParticles = new THREE.Points(rayGeometry, rayMaterial);
+  scene.add(rayParticles);
 };
 const createSpline = () => {
   const points = [];
