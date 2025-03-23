@@ -1,3 +1,11 @@
+<!--
+ * @Author: caopeng
+ * @Date: 2025-03-18 16:08:50
+ * @LastEditors:
+ * @LastEditTime: 2025-03-23 16:06:36
+ * @Description: 请填写简介
+-->
+
 ## three.js 项目案例
 
 - 0319 流星动画
@@ -14,3 +22,10 @@
   [滚动视差中的立方体](https://github.com/caopeng-hi/img/blob/main/db077212462a2d78295a3aa33be8c7f.png)
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/db077212462a2d78295a3aa33be8c7f.png" alt="滚动视差中的立方体">
+
+- 0322 钻石旋转特效
+  [钻石旋转特效](https://github.com/caopeng-hi/img/blob/main/780f104e6135820247652f66518c130.png)
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/6fe093c2b4855d6347c4b3ef8f7751d.png" alt="钻石旋转特效">
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/89c9e9040f2e31cbcbbb708d28b2e65.png" alt="钻石旋转特效">

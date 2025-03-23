@@ -247,7 +247,7 @@ const animate = () => {
 // 创建几何体
 const createPrism = () => {
   // 创建几何体
-  const prismGeometry = new THREE.BoxGeometry(1, 1, 1, 8, 16, 8);
+  const prismGeometry = new THREE.BoxGeometry(1, 3, 1, 8, 16, 8);
   // 创建材质
   const prismMaterial = new THREE.ShaderMaterial({
     vertexShader: vertexShader,
