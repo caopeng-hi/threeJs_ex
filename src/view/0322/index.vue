@@ -93,31 +93,7 @@ const init = () => {
   const pointLight2 = new THREE.PointLight(0x80c0ff, 1.8, 8);
   pointLight2.position.set(-2, -1, 1);
   scene.add(pointLight2);
-  // 创建几何体
-  const prismGeometry = new THREE.BoxGeometry(1, 1, 1, 8, 16, 8);
-  // 创建材质
-  const prismMaterial = new THREE.ShaderMaterial({
-    vertexShader: vertexShader,
-    fragmentShader: fragmentShader,
-    uniforms: {
-      uTime: { value: 0 },
-      uMouseInfluence: { value: new THREE.Vector2(0, 0) },
-    },
-    side: THREE.DoubleSide,
-  });
-  // 创建网格
-  for (let i = 0; i < 8; i++) {
-    const prism = new THREE.Mesh(prismGeometry, prismMaterial);
-    prism.rotation.y = (i / 8) * Math.PI * 2;
-    prism.rotation.z = Math.PI / 4;
-    prism.scale.set(
-      0.8 + Math.sin(i * 0.5) * 0.2,
-      1,
-      0.8 + Math.cos(i * 0.5) * 0.2
-    );
-    prismCore.add(prism);
-  }
-  scene.add(prismCore);
+
   // 创建管道
   const veinGeometry = new THREE.TubeGeometry(
     createSpline(),
@@ -337,6 +313,34 @@ const animate = () => {
     prism.material.uniforms.uTime.value = time;
     prism.material.uniforms.uMouseInfluence.value.lerp(targetRotation, 0.05);
   });
+};
+// 创建几何体
+const createPrism = () => {
+  // 创建几何体
+  const prismGeometry = new THREE.BoxGeometry(1, 1, 1, 8, 16, 8);
+  // 创建材质
+  const prismMaterial = new THREE.ShaderMaterial({
+    vertexShader: vertexShader,
+    fragmentShader: fragmentShader,
+    uniforms: {
+      uTime: { value: 0 },
+      uMouseInfluence: { value: new THREE.Vector2(0, 0) },
+    },
+    side: THREE.DoubleSide,
+  });
+  // 创建网格
+  for (let i = 0; i < 8; i++) {
+    const prism = new THREE.Mesh(prismGeometry, prismMaterial);
+    prism.rotation.y = (i / 8) * Math.PI * 2;
+    prism.rotation.z = Math.PI / 4;
+    prism.scale.set(
+      0.8 + Math.sin(i * 0.5) * 0.2,
+      1,
+      0.8 + Math.cos(i * 0.5) * 0.2
+    );
+    prismCore.add(prism);
+  }
+  scene.add(prismCore);
 };
 const createSpline = () => {
   const points = [];
