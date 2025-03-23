@@ -107,8 +107,8 @@ const init = () => {
     vertexShader: veinVertexShader,
     fragmentShader: veinFragmentShader,
     uniforms: {
-      time: { value: 0 },
-      mouseInfluence: { value: new THREE.Vector2(0, 0) },
+      uTime: { value: 0 },
+      uMouseInfluence: { value: new THREE.Vector2(0, 0) },
     },
     side: THREE.DoubleSide,
   });
@@ -309,9 +309,17 @@ const animate = () => {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
   const time = clock.getElapsedTime();
+  //几何体动画
   prismCore.children.forEach((prism) => {
     prism.material.uniforms.uTime.value = time;
     prism.material.uniforms.uMouseInfluence.value.lerp(targetRotation, 0.05);
+  });
+  // 管道动画
+  energyVeins.children.forEach((vein) => {
+    vein.material.uniforms.uTime.value = time;
+    vein.material.uniforms.uMouseInfluence.value.lerp(targetRotation, 0.05);
+    const pulse = Math.sin(time * 0.8 + vein.userData.pulseOffset) * 0.05 + 1;
+    vein.scale.setScalar(pulse);
   });
 };
 // 创建几何体
