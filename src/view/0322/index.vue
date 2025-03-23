@@ -94,47 +94,6 @@ const init = () => {
   pointLight2.position.set(-2, -1, 1);
   scene.add(pointLight2);
 
-  // 创建粒子
-  const shardGeometries = [
-    new THREE.OctahedronGeometry(0.1, 0), // 八面体
-    new THREE.TetrahedronGeometry(0.12, 0), // 四面体
-    new THREE.DodecahedronGeometry(0.09, 0), // 十二面体
-  ];
-  // 添加多面体
-  const shardCount = 350;
-  for (let i = 0; i < shardCount; i++) {
-    const geoIndex = Math.floor(Math.random() * shardGeometries.length);
-    const hue = (i / shardCount) * 0.7 + 0.1 + Math.random() * 0.2;
-    const shard = new THREE.Mesh(
-      shardGeometries[geoIndex],
-      createShardMaterial(hue)
-    );
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.random() * Math.PI * 2;
-    const torusRadius = 1.8;
-    const tubeRadius = 0.4;
-    shard.position.set(
-      (torusRadius + tubeRadius * Math.cos(phi)) * Math.cos(theta),
-      tubeRadius * Math.sin(phi),
-      (torusRadius + tubeRadius * Math.cos(phi)) * Math.sin(theta)
-    );
-    shard.rotation.set(
-      Math.random() * Math.PI,
-      Math.random() * Math.PI,
-      Math.random() * Math.PI
-    );
-    shard.scale.multiplyScalar(0.8 + Math.random() * 0.4);
-    shard.userData = {
-      orbitSpeed: 0.05 + Math.random() * 0.05,
-      theta: theta,
-      phi: phi,
-      radius: torusRadius + Math.random() * 0.2,
-      pulseSpeed: 0.5 + Math.random() * 1.0,
-    };
-    crystalShards.add(shard);
-  }
-  scene.add(crystalShards);
-
   //添加粒子几何体
   const particleCount = 5000;
   const particlesGeometry = new THREE.BufferGeometry();
@@ -172,7 +131,7 @@ const init = () => {
   const particleMaterial = new THREE.ShaderMaterial({
     vertexShader: partVertexShader,
     fragmentShader: partFragmentShader,
-    uniforms: { time: { value: 0 } },
+    uniforms: { uTime: { value: 0 } },
     transparent: true,
     vertexColors: true,
     blending: THREE.AdditiveBlending,
@@ -294,6 +253,27 @@ const animate = () => {
     const pulse = Math.sin(time * 0.8 + vein.userData.pulseOffset) * 0.05 + 1;
     vein.scale.setScalar(pulse);
   });
+  // 多面体动画
+  crystalShards.children.forEach((shard) => {
+    shard.material.uniforms.uTime.value = time;
+    shard.userData.theta +=
+      shard.userData.orbitSpeed * (0.5 + Math.sin(time * 0.2) * 0.1);
+    shard.userData.phi += shard.userData.orbitSpeed * 0.7;
+    const torusRadius = shard.userData.radius;
+    const tubeRadius = 0.4;
+    const pulse = Math.sin(time * shard.userData.pulseSpeed) * 0.1 + 1.0;
+    shard.position.set(
+      (torusRadius + tubeRadius * Math.cos(shard.userData.phi)) *
+        Math.cos(shard.userData.theta),
+      tubeRadius * Math.sin(shard.userData.phi) + Math.sin(time * 0.5) * 0.1,
+      (torusRadius + tubeRadius * Math.cos(shard.userData.phi)) *
+        Math.sin(shard.userData.theta)
+    );
+    shard.rotation.x += 0.02;
+    shard.rotation.y += 0.03;
+    shard.rotation.z += 0.01;
+    shard.scale.setScalar((0.8 + Math.random() * 0.4) * pulse);
+  });
 };
 // 创建几何体
 const createPrism = () => {
@@ -353,6 +333,49 @@ const createVein = () => {
   // 添加扭结几何体
   scene.add(energyVeins);
 };
+// 创建多面体
+const createShard = () => {
+  // 创建多面体
+  const shardGeometries = [
+    new THREE.OctahedronGeometry(0.1, 0), // 八面体
+    new THREE.TetrahedronGeometry(0.12, 0), // 四面体
+    new THREE.DodecahedronGeometry(0.09, 0), // 十二面体
+  ];
+  // 添加多面体
+  const shardCount = 350;
+  for (let i = 0; i < shardCount; i++) {
+    const geoIndex = Math.floor(Math.random() * shardGeometries.length);
+    const hue = (i / shardCount) * 0.7 + 0.1 + Math.random() * 0.2;
+    const shard = new THREE.Mesh(
+      shardGeometries[geoIndex],
+      createShardMaterial(hue)
+    );
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI * 2;
+    const torusRadius = 1.8;
+    const tubeRadius = 0.4;
+    shard.position.set(
+      (torusRadius + tubeRadius * Math.cos(phi)) * Math.cos(theta),
+      tubeRadius * Math.sin(phi),
+      (torusRadius + tubeRadius * Math.cos(phi)) * Math.sin(theta)
+    );
+    shard.rotation.set(
+      Math.random() * Math.PI,
+      Math.random() * Math.PI,
+      Math.random() * Math.PI
+    );
+    shard.scale.multiplyScalar(0.8 + Math.random() * 0.4);
+    shard.userData = {
+      orbitSpeed: 0.05 + Math.random() * 0.05,
+      theta: theta,
+      phi: phi,
+      radius: torusRadius + Math.random() * 0.2,
+      pulseSpeed: 0.5 + Math.random() * 1.0,
+    };
+    crystalShards.add(shard);
+  }
+  scene.add(crystalShards);
+};
 const createSpline = () => {
   const points = [];
   const segments = 24;
@@ -379,9 +402,9 @@ const createShardMaterial = (hue) => {
     vertexShader: shardVertexShader,
     fragmentShader: shardFragmentShader,
     uniforms: {
-      time: { value: 0 },
-      uniqueOffset: { value: Math.random() * Math.PI * 2 },
-      color: { value: color },
+      uTime: { value: 0 },
+      uUniqueOffset: { value: Math.random() * Math.PI * 2 },
+      uColor: { value: color },
     },
     side: THREE.DoubleSide,
   });
