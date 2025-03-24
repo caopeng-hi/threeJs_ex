@@ -8,8 +8,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 const contentRef = ref(null);
 let scene, camera, renderer, controls, clock;
-let w = 500,
-  h = 500;
+
 let tiles = [];
 let dummy = new THREE.Object3D();
 let bk = false;
@@ -19,12 +18,19 @@ onMounted(() => {
 });
 const init = () => {
   scene = new THREE.Scene();
-
-  camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+  camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
   camera.position.set(40, 40, 40);
   camera.lookAt(scene.position);
-  renderer = new THREE.WebGLRenderer();
-  renderer.setSize(w, h);
+  renderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true,
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
   contentRef.value.appendChild(renderer.domElement);
   controls = new OrbitControls(camera, renderer.domElement);
   //添加灯光
@@ -46,8 +52,6 @@ const init = () => {
   let geometry = new THREE.BoxGeometry(4, 4, 4);
   let material = new THREE.MeshLambertMaterial({
     color: 0x00fb9f,
-    flatShading: true,
-    emissive: 0x444444,
   });
   geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(-2, 2, 2));
   let cube = new THREE.Mesh(geometry, material);
@@ -112,10 +116,5 @@ function plane(x, y, z, color) {
   background: #222;
   overflow: hidden;
   position: relative;
-  canvas {
-    position: absolute;
-    top: calc(50% - 250px);
-    left: calc(50% - 250px);
-  }
 }
 </style>
