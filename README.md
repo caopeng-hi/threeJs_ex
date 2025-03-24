@@ -1,8 +1,8 @@
 <!--
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
- * @LastEditors:
- * @LastEditTime: 2025-03-23 16:06:36
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-03-24 11:38:55
  * @Description: 请填写简介
 -->
 
@@ -29,3 +29,9 @@
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/6fe093c2b4855d6347c4b3ef8f7751d.png" alt="钻石旋转特效">
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/89c9e9040f2e31cbcbbb708d28b2e65.png" alt="钻石旋转特效">
+
+- 0324 旋转小魔方
+
+  [旋转小魔方](https://github.com/caopeng-hi/img/blob/main/8188ac1dce193d1ab345eaa31eb51f2.png)
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/8188ac1dce193d1ab345eaa31eb51f2.png" alt="旋转小魔方">
