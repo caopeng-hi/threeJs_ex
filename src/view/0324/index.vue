@@ -33,11 +33,15 @@ const init = () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   contentRef.value.appendChild(renderer.domElement);
   controls = new OrbitControls(camera, renderer.domElement);
-  //添加灯光
-  let light = new THREE.PointLight(0xffffff);
-  light.position.set(10, 10, 10);
+
+  let light = new THREE.PointLight(0xffffff, 20);
+  light.position.set(1, 4, 2);
   scene.add(light);
-  // 增加物体
+  // 增加环境光
+  let ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+  scene.add(ambientLight);
+
+  // 增加平面
   new plane(-4, 0, 0, 0x444444);
   new plane(-8, 0, 4, 0x444444);
   new plane(-4, 0, 4);
@@ -52,6 +56,7 @@ const init = () => {
   let geometry = new THREE.BoxGeometry(4, 4, 4);
   let material = new THREE.MeshLambertMaterial({
     color: 0x00fb9f,
+    flatShading: true,
   });
   geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(-2, 2, 2));
   let cube = new THREE.Mesh(geometry, material);
