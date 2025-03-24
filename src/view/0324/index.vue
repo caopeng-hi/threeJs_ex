@@ -12,15 +12,13 @@ let w = 500,
   h = 500;
 let tiles = [];
 let dummy = new THREE.Object3D();
+let bk = false;
 onMounted(() => {
   init();
   animate();
 });
 const init = () => {
   scene = new THREE.Scene();
-  // 增减辅助坐标轴
-  const axesHelper = new THREE.AxesHelper(5);
-  scene.add(axesHelper);
 
   camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
   camera.position.set(40, 40, 40);
@@ -39,7 +37,7 @@ const init = () => {
   new plane(-4, 0, 4);
   new plane(-8, 0, 0);
   // 增加obj
-  let dummy = new THREE.Object3D();
+
   dummy.position.x = -6;
   dummy.position.y = 0.25;
   dummy.position.z = 2;
@@ -48,7 +46,7 @@ const init = () => {
   let geometry = new THREE.BoxGeometry(4, 4, 4);
   let material = new THREE.MeshLambertMaterial({
     color: 0x00fb9f,
-    shading: THREE.NoShading,
+    flatShading: true,
     emissive: 0x444444,
   });
   geometry.applyMatrix4(new THREE.Matrix4().makeTranslation(-2, 2, 2));
@@ -58,6 +56,30 @@ const init = () => {
 };
 const animate = () => {
   requestAnimationFrame(animate);
+  if (dummy.rotation.x >= Math.PI * 2 || bk == true) {
+    if (dummy.rotation.z <= -(Math.PI / 2)) {
+      bk = true;
+      if (dummy.rotation.x <= Math.PI + Math.PI / 2) {
+        if (dummy.rotation.y <= -(Math.PI / 2)) {
+          bk = false;
+          dummy.rotation.x = Math.PI + Math.PI / 2;
+          dummy.rotation.y = 0;
+          dummy.rotation.z = 0;
+        } else {
+          dummy.rotation.y -= 0.1;
+        }
+      } else {
+        dummy.rotation.x -= 0.1;
+      }
+    } else {
+      dummy.rotation.z -= 0.1;
+    }
+  } else {
+    if (bk == true) {
+    } else {
+      dummy.rotation.x += 0.1;
+    }
+  }
   renderer.render(scene, camera);
 };
 function plane(x, y, z, color) {
@@ -71,7 +93,7 @@ function plane(x, y, z, color) {
   var geometry = new THREE.BoxGeometry(4, 1, 4);
   var material = new THREE.MeshLambertMaterial({
     color: 0xffffff,
-    shading: THREE.NoShading,
+    flatShading: true,
     emissive: this.color,
   });
   geometry.applyMatrix4(
