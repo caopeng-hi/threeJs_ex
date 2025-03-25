@@ -13,7 +13,6 @@ attribute vec3 minPosition;
 attribute vec3 maxPosition;
 attribute vec3 color;
 attribute vec2 noiseValue;
-
 	float exponentialInOut( float k ){
 			    if( k <= 0.0 ){
 			        return 0.0;
