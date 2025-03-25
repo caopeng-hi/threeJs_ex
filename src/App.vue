@@ -9,7 +9,8 @@
 // import scene from "./view/0320/index.vue";
 // import scene from "./view/0321/index.vue";
 // import scene from "./view/0322/index.vue";
-import scene from "./view/0324/index.vue";
+// import scene from "./view/0324/index.vue";
+import scene from "./view/0325/index.vue";
 </script>
 
 <style lang="scss" scoped>
