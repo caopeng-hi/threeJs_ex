@@ -35,3 +35,8 @@
   [旋转小魔方](https://github.com/caopeng-hi/img/blob/main/8188ac1dce193d1ab345eaa31eb51f2.png)
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/8188ac1dce193d1ab345eaa31eb51f2.png" alt="旋转小魔方">
+
+- 0325 404 页面
+  [404 页面](https://github.com/caopeng-hi/img/blob/main/f1b52b7b7b9e4e336463c5b3609f434.png)
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/f1b52b7b7b9e4e336463c5b3609f434.png" alt="404页面">
