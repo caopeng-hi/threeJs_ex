@@ -21,8 +21,8 @@ let particles = {};
 let imageParticlesSystem;
 let planeHelperObject = new Array();
 let particleCanvas = {
-  width: 1500,
-  height: 600,
+  width: 500,
+  height: 300,
 };
 let guiParams;
 const uniforms = {
@@ -44,12 +44,12 @@ const init = () => {
   // const axesHelper = new THREE.AxesHelper(5);
   // scene.add(axesHelper);
   camera = new THREE.PerspectiveCamera(
-    75,
+    45,
     window.innerWidth / window.innerHeight,
     0.1,
-    10000
+    1000
   );
-  camera.position.set(0, 500, 550);
+  camera.position.set(0, 0, 75);
   renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -60,85 +60,62 @@ const init = () => {
 
   //创建图片
   const data = getImage();
-  particles.initPositions = new Array();
-  particles.minPositions = new Array();
-  particles.maxPositions = new Array();
-  particles.noiseValues = new Array();
-  particles.colors = new Array();
 
-  for (var y = 0, y2 = data.height; y < y2; y++) {
-    for (var x = 0, x2 = data.width; x < x2; x++) {
-      if (data.data[x * 4 + y * 4 * data.width] > 128) {
-        let maxZ = Math.random() * 2000 + (camera.position.z + 10);
-        particles.initPositions.push(x);
-        particles.initPositions.push(y);
-        particles.initPositions.push(maxZ);
-        particles.minPositions.push(x);
-        particles.minPositions.push(y);
-        particles.minPositions.push(0);
-        particles.maxPositions.push(x);
-        particles.maxPositions.push(y);
-        particles.maxPositions.push(maxZ);
-        let color = new THREE.Color(0x7f793f);
-        particles.colors.push(color.r, color.g, color.b);
-        let noiseX = Math.random() * 20 - 10;
-        let noiseY = Math.random() * 20 - 10;
-        particles.noiseValues.push(noiseX);
-        particles.noiseValues.push(noiseY);
-      }
-    }
+  // 创建粒子系统
+  const particlesGeometry = new THREE.BufferGeometry();
+  const particlesCnt = particleCanvas.width * particleCanvas.height;
+  const posArray = new Float32Array(particlesCnt * 3);
+  const colorArray = new Float32Array(particlesCnt * 3);
+  const sizeArray = new Float32Array(particlesCnt);
+  //
+  // 5. 填充粒子数据
+  for (let i = 0; i < particlesCnt; i++) {
+    // 计算像素位置
+    const x = i % particleCanvas.width;
+    const y = Math.floor(i / particleCanvas.width);
+    const pixelIndex = y * (particleCanvas.width * 4) + x * 4;
+
+    // 设置粒子位置 (居中并缩放)
+    posArray[i * 3] = (x - particleCanvas.width / 2) * 0.1;
+    posArray[i * 3 + 1] = (y - particleCanvas.height / 2) * 0.1;
+    posArray[i * 3 + 2] = Math.random() * 10 - 5; // 随机Z位置
+
+    // 设置粒子颜色 (从像素数据获取)
+    colorArray[i * 3] = data[pixelIndex] / 255; // R
+    colorArray[i * 3 + 1] = data[pixelIndex + 1] / 255; // G
+    colorArray[i * 3 + 2] = data[pixelIndex + 2] / 255; // B
+
+    // 设置粒子大小 (基于亮度)
+    const brightness =
+      (data[pixelIndex] + data[pixelIndex + 1] + data[pixelIndex + 2]) /
+      (3 * 255);
+    sizeArray[i] = brightness * 0.8;
   }
-
-  let planeHelperGeometry = new THREE.PlaneGeometry(10000, 10000);
-  let planeHelperMaterial = new THREE.MeshBasicMaterial({
-    color: 0x000000,
-    transparent: true,
-    opacity: 0,
-  });
-  let planeHelper = new THREE.Mesh(planeHelperGeometry, planeHelperMaterial);
-  planeHelperObject.push(planeHelper);
-  scene.add(planeHelper);
-
-  let imageParticlesGeometry = new THREE.BufferGeometry();
-  imageParticlesGeometry.setAttribute(
+  // 6. 将数据添加到几何体
+  particlesGeometry.setAttribute(
     "position",
-    new THREE.Float32BufferAttribute(particles.initPositions, 3)
+    new THREE.BufferAttribute(posArray, 3)
   );
-  imageParticlesGeometry.setAttribute(
-    "minPosition",
-    new THREE.Float32BufferAttribute(particles.minPositions, 3)
-  );
-  imageParticlesGeometry.setAttribute(
-    "maxPosition",
-    new THREE.Float32BufferAttribute(particles.maxPositions, 3)
-  );
-  imageParticlesGeometry.setAttribute(
+  particlesGeometry.setAttribute(
     "color",
-    new THREE.Float32BufferAttribute(particles.colors, 3)
+    new THREE.BufferAttribute(colorArray, 3)
   );
-  imageParticlesGeometry.setAttribute(
-    "noiseValue",
-    new THREE.Float32BufferAttribute(particles.noiseValues, 2)
+  particlesGeometry.setAttribute(
+    "size",
+    new THREE.BufferAttribute(sizeArray, 1)
   );
-  imageParticlesGeometry.setAttribute(
-    "mouseRepulsion",
-    new THREE.Float32BufferAttribute(particles.mouseRepulsion, 1)
-  );
-
-  let imageParticlesMaterial = new THREE.ShaderMaterial({
-    uniforms: uniforms,
-    vertexShader: vertexShader,
-    fragmentShader: fragmentShader,
+  // 7. 创建粒子材质
+  const particlesMaterial = new THREE.PointsMaterial({
+    size: 0.1,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true,
   });
-
-  imageParticlesSystem = new THREE.Points(
-    imageParticlesGeometry,
-    imageParticlesMaterial
-  );
-  imageParticlesSystem.position.x = (-1 * particleCanvas.width) / 2;
-  imageParticlesSystem.position.y = (-1 * particleCanvas.height) / 2;
-
-  scene.add(imageParticlesSystem);
+  // 8. 创建粒子系统并添加到场景
+  const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+  scene.add(particlesMesh);
 
   clock = new THREE.Clock();
   raycaster = new THREE.Raycaster();
@@ -148,21 +125,21 @@ const animate = () => {
   controls.update();
   renderer.render(scene, camera);
 
-  var mouseX, mouseY;
-  raycaster.setFromCamera(mouse, camera);
-  var intersects;
-  intersects = raycaster.intersectObjects(planeHelperObject, true);
-  if (intersects.length > 0) {
-    var intersection = intersects[0];
-    mouseX = intersection.point.x + particleCanvas.width / 2;
-    mouseY = intersection.point.y + particleCanvas.height / 2;
-  }
+  // var mouseX, mouseY;
+  // raycaster.setFromCamera(mouse, camera);
+  // var intersects;
+  // intersects = raycaster.intersectObjects(planeHelperObject, true);
+  // if (intersects.length > 0) {
+  //   var intersection = intersects[0];
+  //   mouseX = intersection.point.x + particleCanvas.width / 2;
+  //   mouseY = intersection.point.y + particleCanvas.height / 2;
+  // }
 
-  if (imageParticlesSystem.material.uniforms) {
-    imageParticlesSystem.material.uniforms.uElapsedTime.value++;
-    imageParticlesSystem.material.uniforms.uMousePosition.value.x = mouseX;
-    imageParticlesSystem.material.uniforms.uMousePosition.value.y = mouseY;
-  }
+  // if (imageParticlesSystem.material.uniforms) {
+  //   imageParticlesSystem.material.uniforms.uElapsedTime.value++;
+  //   imageParticlesSystem.material.uniforms.uMousePosition.value.x = mouseX;
+  //   imageParticlesSystem.material.uniforms.uMousePosition.value.y = mouseY;
+  // }
 };
 const getImage = () => {
   let coordinateCanvas = document.createElement("canvas");
@@ -171,7 +148,6 @@ const getImage = () => {
   coordinateCanvas.height = particleCanvas.height;
   ctx.translate(0, particleCanvas.height);
   ctx.scale(1, -1);
-
   ctx.font = "250pt Times New Roman";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -185,7 +161,7 @@ const getImage = () => {
     coordinateCanvas.height
   );
   ctx.clearRect(0, 0, coordinateCanvas.width, coordinateCanvas.height);
-  return data;
+  return data.data;
 };
 </script>
 
