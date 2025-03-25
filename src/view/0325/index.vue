@@ -58,27 +58,8 @@ const init = () => {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
 
-  let coordinateCanvas = document.createElement("canvas");
-  let ctx = coordinateCanvas.getContext("2d");
-  coordinateCanvas.width = particleCanvas.width;
-  coordinateCanvas.height = particleCanvas.height;
-  ctx.translate(0, particleCanvas.height);
-  ctx.scale(1, -1);
-
-  ctx.font = "250pt Times New Roman";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#ffffff";
-  ctx.fillText("404", coordinateCanvas.width / 2, coordinateCanvas.height / 2);
-
-  const data = ctx.getImageData(
-    0,
-    0,
-    coordinateCanvas.width,
-    coordinateCanvas.height
-  );
-  ctx.clearRect(0, 0, coordinateCanvas.width, coordinateCanvas.height);
-
+  //创建图片
+  const data = getImage();
   particles.initPositions = new Array();
   particles.minPositions = new Array();
   particles.maxPositions = new Array();
@@ -182,6 +163,29 @@ const animate = () => {
     imageParticlesSystem.material.uniforms.uMousePosition.value.x = mouseX;
     imageParticlesSystem.material.uniforms.uMousePosition.value.y = mouseY;
   }
+};
+const getImage = () => {
+  let coordinateCanvas = document.createElement("canvas");
+  let ctx = coordinateCanvas.getContext("2d");
+  coordinateCanvas.width = particleCanvas.width;
+  coordinateCanvas.height = particleCanvas.height;
+  ctx.translate(0, particleCanvas.height);
+  ctx.scale(1, -1);
+
+  ctx.font = "250pt Times New Roman";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText("404", coordinateCanvas.width / 2, coordinateCanvas.height / 2);
+
+  const data = ctx.getImageData(
+    0,
+    0,
+    coordinateCanvas.width,
+    coordinateCanvas.height
+  );
+  ctx.clearRect(0, 0, coordinateCanvas.width, coordinateCanvas.height);
+  return data;
 };
 </script>
 
