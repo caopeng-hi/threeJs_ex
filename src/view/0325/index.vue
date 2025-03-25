@@ -25,6 +25,15 @@ let particleCanvas = {
   height: 600,
 };
 let guiParams;
+const uniforms = {
+  uDuration: { type: "f", value: 180 },
+  uElapsedTime: { type: "f", value: 0 },
+  uSize: { type: "f", value: 3 },
+  uNoise: { type: "f", value: 8 },
+  uMousePosition: { type: "v2", value: new THREE.Vector2() },
+  uMouseRadius: { type: "f", value: 100 },
+  uMouseStrength: { type: "f", value: 0.75 },
+};
 onMounted(() => {
   init();
   animate();
@@ -135,15 +144,6 @@ const init = () => {
     new THREE.Float32BufferAttribute(particles.mouseRepulsion, 1)
   );
 
-  const uniforms = {
-    uDuration: { type: "f", value: 180 },
-    uElapsedTime: { type: "f", value: 0 },
-    uSize: { type: "f", value: 3 },
-    uNoise: { type: "f", value: 8 },
-    uMousePosition: { type: "v2", value: new THREE.Vector2() },
-    uMouseRadius: { type: "f", value: 100 },
-    uMouseStrength: { type: "f", value: 0.75 },
-  };
   let imageParticlesMaterial = new THREE.ShaderMaterial({
     uniforms: uniforms,
     vertexShader: vertexShader,
