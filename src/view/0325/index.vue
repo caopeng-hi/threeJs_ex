@@ -6,6 +6,10 @@
 import { onMounted, ref } from "vue";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+// 引入着色器
+import vertexShader from "../../shader/0325/vert.glsl?raw";
+import fragmentShader from "../../shader/0325/frag.glsl?raw";
+
 let scene, camera, renderer, controls;
 const contentRef = ref(null);
 let mouse = new THREE.Vector2();
@@ -16,9 +20,9 @@ let orbit;
 let particles = {};
 let imageParticlesSystem;
 let planeHelperObject = new Array();
-let particleCanvas={
-    width :1500
-    height: 600
+let particleCanvas = {
+  width: 1500,
+  height: 600,
 };
 let guiParams;
 onMounted(() => {
@@ -27,8 +31,9 @@ onMounted(() => {
 });
 const init = () => {
   scene = new THREE.Scene();
-  const axesHelper = new THREE.AxesHelper(5);
-  scene.add(axesHelper);
+  scene.background = new THREE.Color(0x000000);
+  // const axesHelper = new THREE.AxesHelper(5);
+  // scene.add(axesHelper);
   camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
@@ -44,8 +49,8 @@ const init = () => {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
 
-  let  coordinateCanvas = document.createElement("canvas");
-  let  ctx = coordinateCanvas.getContext("2d");
+  let coordinateCanvas = document.createElement("canvas");
+  let ctx = coordinateCanvas.getContext("2d");
   coordinateCanvas.width = particleCanvas.width;
   coordinateCanvas.height = particleCanvas.height;
   ctx.translate(0, particleCanvas.height);
@@ -74,7 +79,7 @@ const init = () => {
   for (var y = 0, y2 = data.height; y < y2; y++) {
     for (var x = 0, x2 = data.width; x < x2; x++) {
       if (data.data[x * 4 + y * 4 * data.width] > 128) {
-        var maxZ = Math.random() * 2000 + (camera.position.z + 10);
+        let maxZ = Math.random() * 2000 + (camera.position.z + 10);
         particles.initPositions.push(x);
         particles.initPositions.push(y);
         particles.initPositions.push(maxZ);
@@ -84,53 +89,53 @@ const init = () => {
         particles.maxPositions.push(x);
         particles.maxPositions.push(y);
         particles.maxPositions.push(maxZ);
-        var color = new THREE.Color(0x7f793f);
+        let color = new THREE.Color(0x7f793f);
         particles.colors.push(color.r, color.g, color.b);
-        var noiseX = Math.random() * 20 - 10;
-        var noiseY = Math.random() * 20 - 10;
+        let noiseX = Math.random() * 20 - 10;
+        let noiseY = Math.random() * 20 - 10;
         particles.noiseValues.push(noiseX);
         particles.noiseValues.push(noiseY);
       }
     }
   }
 
-  var planeHelperGeometry = new THREE.PlaneGeometry(10000, 10000);
-  var planeHelperMaterial = new THREE.MeshBasicMaterial({
+  let planeHelperGeometry = new THREE.PlaneGeometry(10000, 10000);
+  let planeHelperMaterial = new THREE.MeshBasicMaterial({
     color: 0x000000,
     transparent: true,
     opacity: 0,
   });
-  var planeHelper = new THREE.Mesh(planeHelperGeometry, planeHelperMaterial);
+  let planeHelper = new THREE.Mesh(planeHelperGeometry, planeHelperMaterial);
   planeHelperObject.push(planeHelper);
   scene.add(planeHelper);
 
-  var imageParticlesGeometry = new THREE.BufferGeometry();
-  imageParticlesGeometry.addAttribute(
+  let imageParticlesGeometry = new THREE.BufferGeometry();
+  imageParticlesGeometry.setAttribute(
     "position",
     new THREE.Float32BufferAttribute(particles.initPositions, 3)
   );
-  imageParticlesGeometry.addAttribute(
+  imageParticlesGeometry.setAttribute(
     "minPosition",
     new THREE.Float32BufferAttribute(particles.minPositions, 3)
   );
-  imageParticlesGeometry.addAttribute(
+  imageParticlesGeometry.setAttribute(
     "maxPosition",
     new THREE.Float32BufferAttribute(particles.maxPositions, 3)
   );
-  imageParticlesGeometry.addAttribute(
+  imageParticlesGeometry.setAttribute(
     "color",
     new THREE.Float32BufferAttribute(particles.colors, 3)
   );
-  imageParticlesGeometry.addAttribute(
+  imageParticlesGeometry.setAttribute(
     "noiseValue",
     new THREE.Float32BufferAttribute(particles.noiseValues, 2)
   );
-  imageParticlesGeometry.addAttribute(
+  imageParticlesGeometry.setAttribute(
     "mouseRepulsion",
     new THREE.Float32BufferAttribute(particles.mouseRepulsion, 1)
   );
 
-  var uniforms = {
+  const uniforms = {
     uDuration: { type: "f", value: 180 },
     uElapsedTime: { type: "f", value: 0 },
     uSize: { type: "f", value: 3 },
@@ -139,10 +144,10 @@ const init = () => {
     uMouseRadius: { type: "f", value: 100 },
     uMouseStrength: { type: "f", value: 0.75 },
   };
-  var imageParticlesMaterial = new THREE.ShaderMaterial({
+  let imageParticlesMaterial = new THREE.ShaderMaterial({
     uniforms: uniforms,
-    vertexShader: document.getElementById("particle-image-vs").textContent,
-    fragmentShader: document.getElementById("particle-image-fs").textContent,
+    vertexShader: vertexShader,
+    fragmentShader: fragmentShader,
   });
 
   imageParticlesSystem = new THREE.Points(
@@ -155,7 +160,6 @@ const init = () => {
   scene.add(imageParticlesSystem);
 
   clock = new THREE.Clock();
-  clock.start();
   raycaster = new THREE.Raycaster();
 };
 const animate = () => {
