@@ -7,7 +7,8 @@ import { onMounted, ref } from "vue";
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-
+// 导入RoundedBoxGeometry
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 const canvasRef = ref(null);
 let scene,
   camera,
@@ -24,7 +25,6 @@ const params = {
   containerSize: 1,
   gravity: 10,
 };
-boxMaterial.visible = true;
 onMounted(() => {
   initScene();
   animate();
@@ -55,7 +55,8 @@ const initScene = () => {
   controls.autoRotate = true;
   controls.autoRotateSpeed = 19;
   controls.enableDamping = true;
-
+  throwBoxes();
+  initPhysics();
   for (let i = 0; i < 6; i++) {
     const body = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
     physicsWorld.addBody(body);
@@ -78,6 +79,8 @@ const initScene = () => {
     color: 0x000000,
     visible: false,
   });
+  boxMaterial.visible = true;
+
   const boxGeometry = new RoundedBoxGeometry(
     params.boxSize,
     params.boxSize,
@@ -116,9 +119,6 @@ const initScene = () => {
     new THREE.LineBasicMaterial({ color: 0x000000 })
   );
   scene.add(wallLine);
-
-  throwBoxes();
-  initPhysics();
 };
 const animate = () => {
   requestAnimationFrame(animate);
