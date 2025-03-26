@@ -28,6 +28,7 @@ const params = {
 onMounted(() => {
   initScene();
   animate();
+  canvasRef.value.addEventListener("dblclick", throwBoxes);
 });
 
 const initScene = () => {
