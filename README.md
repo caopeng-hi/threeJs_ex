@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-03-24 11:38:55
+ * @LastEditTime: 2025-03-26 11:05:03
  * @Description: 请填写简介
 -->
 
@@ -40,3 +40,8 @@
   [404 页面](https://github.com/caopeng-hi/img/blob/main/f1b52b7b7b9e4e336463c5b3609f434.png)
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/f1b52b7b7b9e4e336463c5b3609f434.png" alt="404页面">
+
+- 0326 物理特效几何体
+  [物理特效几何体](https://github.com/caopeng-hi/img/blob/main/7a1eaea4311aec6a77ef9a741ae20ea.png)
+
+  <video width="500" loop muted autoplay height="300" src="https://github.com/caopeng-hi/img/blob/main/20250326_105939.mp4" alt="物理特效几何体"></video>
