@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "cannon": "^0.6.2",
     "gsap": "^3.12.7",
     "noisejs": "^2.1.0",
     "reset.css": "^2.0.2",
