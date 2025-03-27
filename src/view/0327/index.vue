@@ -11,6 +11,9 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { GammaCorrectionShader } from "three/addons/shaders/GammaCorrectionShader.js";
+// 导入着色器
+import vertexShader from "../../shader/0327/vert.glsl?raw";
+import fragmentShader from "../../shader/0327/frag.glsl?raw";
 const canvasRef = ref(null);
 const clock = new THREE.Clock();
 let scene, camera, renderer, controls, composer, trailTexture, particleSystem;
@@ -177,23 +180,9 @@ function initScene() {
       opacity: { value: 0.3 }, // 轨迹不透明度 (运动轨迹效果强度)
     },
     // 顶点着色器 - 处理顶点位置
-    vertexShader: `
- varying vec2 vUv;
- void main() {
- vUv = uv;  // 传递纹理坐标
- gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
- }
- `,
+    vertexShader: vertexShader,
     // 片段着色器 - 处理像素颜色
-    fragmentShader: `
-  uniform sampler2D tDiffuse;  // 输入纹理
-  uniform float opacity;   // 不透明度
- varying vec2 vUv;  // 从顶点着色器接收的纹理坐标
- void main() {
-  vec4 texel = texture2D(tDiffuse, vUv); // 采样纹理
-  gl_FragColor = opacity * texel;   // 应用不透明度
-  }
- `,
+    fragmentShader: fragmentShader,
   });
 
   // 创建轨迹效果通道并添加到合成器
