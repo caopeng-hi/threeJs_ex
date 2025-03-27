@@ -13,7 +13,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { GammaCorrectionShader } from "three/addons/shaders/GammaCorrectionShader.js";
 const canvasRef = ref(null);
 const clock = new THREE.Clock();
-let scene, camera, renderer, controls;
+let scene, camera, renderer, controls, composer, trailTexture, particleSystem;
 
 onMounted(() => {
   initScene();
@@ -80,7 +80,7 @@ function initScene() {
   const trailCamera = camera.clone(); // 使用相同的相机设置
 
   // 创建渲染目标纹理
-  const trailTexture = new THREE.WebGLRenderTarget(
+  trailTexture = new THREE.WebGLRenderTarget(
     window.innerWidth,
     window.innerHeight,
     {
@@ -89,11 +89,9 @@ function initScene() {
       format: THREE.RGBAFormat,
     }
   );
-  const trailParticles = particleSystem.clone();
-  trailScene.add(trailParticles);
 
   // 创建主效果合成器
-  const composer = new EffectComposer(renderer);
+  composer = new EffectComposer(renderer);
   const renderPass = new RenderPass(scene, camera); // 创建渲染通道
   composer.addPass(renderPass); // 添加到合成器
 
@@ -119,9 +117,9 @@ function initScene() {
   const numParticles = 25000;
   // 创建粒子几何体
   const geometry = new THREE.BufferGeometry();
-  const positions = newFloat32Array(numParticles * 3); // 位置数组 (x,y,z) * 粒子数量
-  const colors = newFloat32Array(numParticles * 3); // 颜色数组 (r,g,b) * 粒子数量
-  const sizes = newFloat32Array(numParticles); // 大小数组
+  const positions = new Float32Array(numParticles * 3); // 位置数组 (x,y,z) * 粒子数量
+  const colors = new Float32Array(numParticles * 3); // 颜色数组 (r,g,b) * 粒子数量
+  const sizes = new Float32Array(numParticles); // 大小数组
 
   // 使用球坐标算法分布粒子，确保均匀覆盖球体表面
   for (let i = 0; i < numParticles; i++) {
@@ -165,12 +163,12 @@ function initScene() {
     sizeAttenuation: true, // 启用大小衰减，远处粒子更小
   });
   // 创建粒子系统并添加到场景
-  const particleSystem = new THREE.Points(geometry, material);
+  particleSystem = new THREE.Points(geometry, material);
   scene.add(particleSystem);
 
   //   // 为轨迹效果创建粒子系统副本
-  //   const trailParticles = particleSystem.clone();
-  //   trailScene.add(trailParticles);
+  const trailParticles = particleSystem.clone();
+  trailScene.add(trailParticles);
 
   // 创建轨迹效果的着色器材质
   const trailMaterial = new THREE.ShaderMaterial({
