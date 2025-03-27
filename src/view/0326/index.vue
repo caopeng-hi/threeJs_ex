@@ -1,3 +1,10 @@
+<!--
+ * @Author: caopeng
+ * @Date: 2025-03-26 10:30:12
+ * @LastEditors: 
+ * @LastEditTime: 2025-03-27 13:19:54
+ * @Description: 请填写简介
+-->
 <template>
   <div class="canvasRef" ref="canvasRef"></div>
 </template>
