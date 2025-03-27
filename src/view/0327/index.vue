@@ -12,7 +12,7 @@ import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { GammaCorrectionShader } from "three/addons/shaders/GammaCorrectionShader.js";
 const canvasRef = ref(null);
-
+const clock = new THREE.Clock();
 let scene, camera, renderer, controls;
 
 onMounted(() => {
@@ -148,11 +148,80 @@ function initScene() {
     // 设置粒子大小，添加随机变化
     sizes[i] = 0.035 * (0.8 + Math.random() * 0.4); // 粒子大小
   }
+  // 将数据添加到几何体
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
+
+  // 创建粒子材质
+  const material = new THREE.PointsMaterial({
+    size: 0.035, // 粒子大小
+    vertexColors: true, // 使用顶点颜色
+    blending: THREE.AdditiveBlending, // 加法混合模式，使重叠粒子更亮
+    depthTest: true, // 启用深度测试
+    depthWrite: false, // 禁用深度写入，避免遮挡问题
+    transparent: true, // 启用透明
+    opacity: 0.9, // 设置不透明度
+    sizeAttenuation: true, // 启用大小衰减，远处粒子更小
+  });
+  // 创建粒子系统并添加到场景
+  const particleSystem = new THREE.Points(geometry, material);
+  scene.add(particleSystem);
+
+  //   // 为轨迹效果创建粒子系统副本
+  //   const trailParticles = particleSystem.clone();
+  //   trailScene.add(trailParticles);
+
+  // 创建轨迹效果的着色器材质
+  const trailMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      tDiffuse: { value: null }, // 将在渲染时设置为上一帧的渲染结果
+      opacity: { value: 0.3 }, // 轨迹不透明度 (运动轨迹效果强度)
+    },
+    // 顶点着色器 - 处理顶点位置
+    vertexShader: `
+ varying vec2 vUv;
+ void main() {
+ vUv = uv;  // 传递纹理坐标
+ gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+ }
+ `,
+    // 片段着色器 - 处理像素颜色
+    fragmentShader: `
+  uniform sampler2D tDiffuse;  // 输入纹理
+  uniform float opacity;   // 不透明度
+ varying vec2 vUv;  // 从顶点着色器接收的纹理坐标
+ void main() {
+  vec4 texel = texture2D(tDiffuse, vUv); // 采样纹理
+  gl_FragColor = opacity * texel;   // 应用不透明度
+  }
+ `,
+  });
+
+  // 创建轨迹效果通道并添加到合成器
+  const trailPass = new ShaderPass(trailMaterial);
+  trailPass.renderToScreen = true; // 设置为直接渲染到屏幕
+  composer.addPass(trailPass);
+
+  // 双击事件 - 重置相机位置和控制器
+  renderer.domElement.addEventListener("dblclick", () => {
+    camera.position.set(0, 0, 5); // 重置相机位置
+    camera.lookAt(0, 0, 0); // 重置相机朝向
+    controls.reset(); // 重置控制器
+  });
 }
 function animate() {
   requestAnimationFrame(animate);
   controls.update(); // 更新控制器
-  renderer.render(scene, camera); // 渲染场景和相机
+  renderer.setRenderTarget(trailTexture); // 设置渲染目标为轨迹纹理
+  renderer.render(scene, camera); // 渲染场景
+  renderer.setRenderTarget(null); // 重置渲染目标
+  const delta = clock.getDelta(); // 获取时间差，用于平滑动画
+  // 旋转粒子系统
+  if (particleSystem) {
+    particleSystem.rotation.y += delta * 0.1; // 旋转速度
+  }
+  composer.render(); // 使用效果合成器渲染
 }
 </script>
 
