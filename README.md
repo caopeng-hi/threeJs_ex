@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-03-26 11:10:11
+ * @LastEditTime: 2025-03-27 14:00:04
  * @Description: 请填写简介
 -->
 
@@ -45,3 +45,8 @@
   [物理特效几何体](https://github.com/caopeng-hi/img/blob/main/7a1eaea4311aec6a77ef9a741ae20ea.png)
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250326_105939.gif" alt="物理特效几何体">
+
+- 0327 粒子发光球体
+  [粒子发光球体](https://github.com/caopeng-hi/img/blob/main/20250327_135343.gif)
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250327_135343.gif" alt="粒子发光球体">
