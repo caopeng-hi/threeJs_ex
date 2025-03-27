@@ -3,24 +3,34 @@
 </template>
 
 <script setup>
+// 导入Vue组合式API
 import { onMounted, ref } from "vue";
+// 导入Three.js核心库
 import * as THREE from "three";
+// 导入轨道控制器（允许用户用鼠标交互控制场景）
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+// 导入后期处理相关组件
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { GammaCorrectionShader } from "three/addons/shaders/GammaCorrectionShader.js";
-// 导入着色器
-import vertexShader from "../../shader/0327/vert.glsl?raw";
-import fragmentShader from "../../shader/0327/frag.glsl?raw";
+
+// 导入自定义着色器代码（GLSL）
+import vertexShader from "../../shader/0327/vert.glsl?raw"; // 顶点着色器
+import fragmentShader from "../../shader/0327/frag.glsl?raw"; // 片段着色器
+
+// Vue ref引用，用于挂载Three.js渲染器DOM元素
 const canvasRef = ref(null);
+// Three.js时钟对象，用于计算帧间隔时间
 const clock = new THREE.Clock();
+// 全局变量声明
 let scene, camera, renderer, controls, composer, trailTexture, particleSystem;
 
+// 组件挂载后执行初始化
 onMounted(() => {
-  initScene();
-  animate();
+  initScene(); // 初始化3D场景
+  animate(); // 启动动画循环
 });
 function initScene() {
   // 创建场景
@@ -29,7 +39,7 @@ function initScene() {
   scene.fog = new THREE.Fog(0x050505, 10, 50); // 雾效果
   // 创建相机
   camera = new THREE.PerspectiveCamera(
-    75,
+    60,
     window.innerWidth / window.innerHeight,
     0.1,
     1000
@@ -198,17 +208,26 @@ function initScene() {
   });
 }
 function animate() {
-  requestAnimationFrame(animate);
-  controls.update(); // 更新控制器
-  renderer.setRenderTarget(trailTexture); // 设置渲染目标为轨迹纹理
-  renderer.render(scene, camera); // 渲染场景
-  renderer.setRenderTarget(null); // 重置渲染目标
-  const delta = clock.getDelta(); // 获取时间差，用于平滑动画
-  // 旋转粒子系统
+  requestAnimationFrame(animate); // 循环调用自身实现动画
+
+  // 更新轨道控制器（必须每帧调用）
+  controls.update();
+
+  // 轨迹效果渲染流程：
+  renderer.setRenderTarget(trailTexture); // 1. 设置渲染目标为轨迹纹理
+  renderer.render(scene, camera); // 2. 渲染当前帧到纹理
+  renderer.setRenderTarget(null); // 3. 重置渲染目标
+
+  // 获取帧间隔时间（用于平滑动画）
+  const delta = clock.getDelta();
+
+  // 粒子系统动画
   if (particleSystem) {
-    particleSystem.rotation.y += delta * 0.1; // 旋转速度
+    particleSystem.rotation.y += delta * 0.1; // 绕Y轴缓慢旋转
   }
-  composer.render(); // 使用效果合成器渲染
+
+  // 使用效果合成器渲染最终画面（包含所有后期处理效果）
+  composer.render();
 }
 </script>
 
