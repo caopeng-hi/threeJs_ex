@@ -2,13 +2,18 @@
  * @Author: caopeng
  * @Date: 2025-03-28 10:00:29
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-03-28 10:38:37
+ * @LastEditTime: 2025-03-28 10:46:49
  * @Description: 请填写简介
 -->
 <template>
-  <div class="canvasRef" ref="canvasRef"></div>
+  <div class="canvasRef" ref="canvasRef">
+    <div v-if="flag" class="tip" @click="handelClick">点击播放音乐</div>
+  </div>
 </template>
 <script setup>
+/**
+ * 实现加载音乐动画
+*/
 import { onMounted, ref } from "vue";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
@@ -27,6 +32,7 @@ let clock = new THREE.Clock();
 // 加载音频文件
 let audioLoaded = false;
 let audioBuffer = null;
+const flag = ref(true);
 const canvasRef = ref(null);
 const uniforms = {
   u_time: { type: "f", value: 0.0 }, // 时间变量
@@ -38,11 +44,6 @@ const uniforms = {
 onMounted(() => {
   init();
   animate();
-  document.addEventListener("click", function () {
-    if (audioLoaded && !sound.isPlaying) {
-      tryPlayAudio();
-    }
-  });
 });
 const init = () => {
   scene = new THREE.Scene();
@@ -137,16 +138,39 @@ const animate = () => {
     mesh.material.uniforms.u_frequency.value = 0.01;
   }
 };
-function tryPlayAudio() {
-  if (!audioLoaded) return;
-  try {
-    sound.setBuffer(audioBuffer);
-    sound.setLoop(true);
-    sound.play();
-    console.log("音频开始播放");
-  } catch (error) {
-    console.error("音频播放失败:", error);
+const handelClick = () => {
+  if (audioLoaded && !sound.isPlaying) {
+    try {
+      sound.setBuffer(audioBuffer);
+      sound.setLoop(true);
+      sound.play();
+      console.log("音频开始播放");
+      flag.value = false;
+    } catch (error) {
+      console.error("音频播放失败:", error);
+    }
+  }
+};
+</script>
+<style lang="scss" scoped>
+.canvasRef {
+  position: relative;
+  .tip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #000;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 10px 10px rgba(0, 0, 0, 0.5);
   }
 }
-</script>
-<style scoped></style>
+</style>
