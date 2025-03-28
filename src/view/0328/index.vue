@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-28 10:00:29
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-03-28 10:32:06
+ * @LastEditTime: 2025-03-28 10:38:37
  * @Description: 请填写简介
 -->
 <template>
@@ -22,7 +22,7 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
 import vertexShader from "../../shader/0328/vert.glsl?raw"; // 顶点着色器
 import fragmentShader from "../../shader/0328/frag.glsl?raw"; // 片段着色器
 
-let scene, camera, renderer, controls, bloomComposer, analyser, sound;
+let scene, camera, renderer, controls, bloomComposer, analyser, sound, mesh;
 let clock = new THREE.Clock();
 // 加载音频文件
 let audioLoaded = false;
@@ -69,7 +69,7 @@ const init = () => {
   }); // 创建二十面体几何体，用于雷达效果
 
   const geo = new THREE.IcosahedronGeometry(4, 30); // 创建网格并添加到场景
-  const mesh = new THREE.Mesh(geo, mat);
+  mesh = new THREE.Mesh(geo, mat);
   // 设置为线框模式
   mesh.material.wireframe = true;
   scene.add(mesh);
@@ -84,7 +84,7 @@ const init = () => {
   // 创建音频加载器
   const audioLoader = new THREE.AudioLoader();
 
-  // 加载音频文件
+  // 加载音频文件 文件放在public文件夹下
   audioLoader.load("/2293934203.mp3", function (buffer) {
     console.log("音频加载完成");
     audioBuffer = buffer;
@@ -123,7 +123,7 @@ const animate = () => {
   bloomComposer.render();
 
   // 更新时间变量
-  uniforms.u_time.value = clock.getElapsedTime();
+  mesh.material.uniforms.u_time.value = clock.getElapsedTime();
 
   // 确保音频分析器已初始化且音频正在播放
 
@@ -131,10 +131,10 @@ const animate = () => {
     // 获取频率数据并添加平滑处理
     const frequency = analyser.getAverageFrequency();
     // 对频率值进行归一化处理 (0-1范围)
-    uniforms.u_frequency.value = Math.min(frequency / 255, 1.0);
+    mesh.material.uniforms.u_frequency.value = frequency;
   } else {
     // 如果没有音频播放，设置基础值
-    uniforms.u_frequency.value = 0.01;
+    mesh.material.uniforms.u_frequency.value = 0.01;
   }
 };
 function tryPlayAudio() {
