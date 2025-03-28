@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-28 10:00:29
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-03-28 10:12:03
+ * @LastEditTime: 2025-03-28 10:19:44
  * @Description: 请填写简介
 -->
 <template>
@@ -22,7 +22,8 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
 import vertexShader from "../../shader/0328/vert.glsl?raw"; // 顶点着色器
 import fragmentShader from "../../shader/0328/frag.glsl?raw"; // 片段着色器
 
-let scene, camera, renderer, controls;
+let scene, camera, renderer, controls, bloomComposer;
+let clock = new THREE.Clock();
 const canvasRef = ref(null);
 const uniforms = {
   u_time: { type: "f", value: 0.0 }, // 时间变量
@@ -65,35 +66,38 @@ const init = () => {
   mesh.material.wireframe = true;
   scene.add(mesh);
 
-  //   // 创建渲染通道，用于后期处理
-  //   const renderScene = new RenderPass(scene, camera);
+  // 创建渲染通道，用于后期处理
+  const renderScene = new RenderPass(scene, camera);
 
-  //   // 创建辉光通道，为场景添加发光效果
-  //   const bloomPass = new UnrealBloomPass(
-  //     new THREE.Vector2(window.innerWidth, window.innerHeight)
-  //   );
-  //   // 设置辉光阈值，只有亮度超过此值的像素才会发光
-  //   bloomPass.threshold = 0.5;
-  //   // 设置辉光强度
-  //   bloomPass.strength = 0.5;
-  //   // 设置辉光半径
-  //   bloomPass.radius = 0.4;
+  // 创建辉光通道，为场景添加发光效果
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight)
+  );
+  // 设置辉光阈值，只有亮度超过此值的像素才会发光
+  bloomPass.threshold = 0.5;
+  // 设置辉光强度
+  bloomPass.strength = 0.5;
+  // 设置辉光半径
+  bloomPass.radius = 0.4;
 
-  //   // 创建效果合成器，用于组合多个后期处理效果
-  //   const bloomComposer = new EffectComposer(renderer);
-  //   // 添加渲染通道
-  //   bloomComposer.addPass(renderScene);
-  //   // 添加辉光通道
-  //   bloomComposer.addPass(bloomPass);
-
-  //   // 创建输出通道，用于最终渲染结果的输出
-  //   const outputPass = new OutputPass();
-  //   bloomComposer.addPass(outputPass);
+  // 创建效果合成器，用于组合多个后期处理效果
+  bloomComposer = new EffectComposer(renderer);
+  // 添加渲染通道
+  bloomComposer.addPass(renderScene);
+  // 添加辉光通道
+  bloomComposer.addPass(bloomPass);
+  // 创建输出通道，用于最终渲染结果的输出
+  const outputPass = new OutputPass();
+  bloomComposer.addPass(outputPass);
 };
 const animate = () => {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
   controls.update();
+  bloomComposer.render();
+  // 更新时间变量
+  uniforms.u_time.value = clock.getElapsedTime(); // 更新二十面体的旋转角度
+  // 更新频率变量，根据音频分析器获取的平均频率 音频分析器获取的平均频率
 };
 </script>
 <style scoped></style>
