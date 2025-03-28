@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-03-27 14:00:04
+ * @LastEditTime: 2025-03-28 12:24:36
  * @Description: 请填写简介
 -->
 
@@ -50,3 +50,8 @@
   [粒子发光球体](https://github.com/caopeng-hi/img/blob/main/20250327_135343.gif)
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250327_135343.gif" alt="粒子发光球体">
+
+- 0328 音乐可视化粒子球
+  [音乐可视化粒子球](https://github.com/caopeng-hi/img/blob/main/20250328_122017.gif)
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250328_122017.gif" alt="音乐可视化粒子球">
