@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-28 10:00:29
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-03-28 10:19:44
+ * @LastEditTime: 2025-03-28 10:32:06
  * @Description: 请填写简介
 -->
 <template>
@@ -22,8 +22,11 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
 import vertexShader from "../../shader/0328/vert.glsl?raw"; // 顶点着色器
 import fragmentShader from "../../shader/0328/frag.glsl?raw"; // 片段着色器
 
-let scene, camera, renderer, controls, bloomComposer;
+let scene, camera, renderer, controls, bloomComposer, analyser, sound;
 let clock = new THREE.Clock();
+// 加载音频文件
+let audioLoaded = false;
+let audioBuffer = null;
 const canvasRef = ref(null);
 const uniforms = {
   u_time: { type: "f", value: 0.0 }, // 时间变量
@@ -35,6 +38,11 @@ const uniforms = {
 onMounted(() => {
   init();
   animate();
+  document.addEventListener("click", function () {
+    if (audioLoaded && !sound.isPlaying) {
+      tryPlayAudio();
+    }
+  });
 });
 const init = () => {
   scene = new THREE.Scene();
@@ -66,6 +74,24 @@ const init = () => {
   mesh.material.wireframe = true;
   scene.add(mesh);
 
+  // 创建音频监听器
+  const listener = new THREE.AudioListener();
+  camera.add(listener);
+
+  // 创建音频对象
+  sound = new THREE.Audio(listener);
+
+  // 创建音频加载器
+  const audioLoader = new THREE.AudioLoader();
+
+  // 加载音频文件
+  audioLoader.load("/2293934203.mp3", function (buffer) {
+    console.log("音频加载完成");
+    audioBuffer = buffer;
+    audioLoaded = true;
+  });
+  // 创建音频分析器，用于获取音频频率数据
+  analyser = new THREE.AudioAnalyser(sound, 32);
   // 创建渲染通道，用于后期处理
   const renderScene = new RenderPass(scene, camera);
 
@@ -95,9 +121,32 @@ const animate = () => {
   renderer.render(scene, camera);
   controls.update();
   bloomComposer.render();
+
   // 更新时间变量
-  uniforms.u_time.value = clock.getElapsedTime(); // 更新二十面体的旋转角度
-  // 更新频率变量，根据音频分析器获取的平均频率 音频分析器获取的平均频率
+  uniforms.u_time.value = clock.getElapsedTime();
+
+  // 确保音频分析器已初始化且音频正在播放
+
+  if (sound && sound.isPlaying && analyser) {
+    // 获取频率数据并添加平滑处理
+    const frequency = analyser.getAverageFrequency();
+    // 对频率值进行归一化处理 (0-1范围)
+    uniforms.u_frequency.value = Math.min(frequency / 255, 1.0);
+  } else {
+    // 如果没有音频播放，设置基础值
+    uniforms.u_frequency.value = 0.01;
+  }
 };
+function tryPlayAudio() {
+  if (!audioLoaded) return;
+  try {
+    sound.setBuffer(audioBuffer);
+    sound.setLoop(true);
+    sound.play();
+    console.log("音频开始播放");
+  } catch (error) {
+    console.error("音频播放失败:", error);
+  }
+}
 </script>
 <style scoped></style>
