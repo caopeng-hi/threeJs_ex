@@ -16,10 +16,12 @@
     "cannon-es": "^0.20.0",
     "gsap": "^3.12.7",
     "noisejs": "^2.1.0",
+    "postprocessing": "^6.37.2",
     "reset.css": "^2.0.2",
     "scss": "^0.2.4",
     "simplex-noise": "^4.0.3",
     "three": "^0.174.0",
+    "three-good-godrays": "^0.7.1",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
