@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-01 09:05:52
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-01 09:21:29
+ * @LastEditTime: 2025-04-01 09:26:47
  * @Description: 请填写简介
 -->
 <template>
@@ -168,6 +168,54 @@ const animate = () => {
   mouse.ratio.y = mouse.position.y / window.innerHeight;
   camera.position.x = mouse.ratio.x * 0.044 - 0.025 + cameraShake.x;
   camera.position.y = mouse.ratio.y * 0.044 - 0.025;
+  // 更新曲线
+  if (curve && curve.points) {
+    curve.points[2].x = 0.6 * (1 - mouse.ratio.x) - 0.3;
+    curve.points[3].x = 0;
+    curve.points[4].x = 0.6 * (1 - mouse.ratio.x) - 0.3;
+
+    curve.points[2].y = 0.6 * (1 - mouse.ratio.y) - 0.3;
+    curve.points[3].y = 0;
+    curve.points[4].y = 0.6 * (1 - mouse.ratio.y) - 0.3;
+  }
+  // 重新生成管道几何体
+  if (curve) {
+    const newTubeGeometry = new THREE.TubeGeometry(curve, 70, 0.02, 30, false);
+
+    // 将新几何体的顶点数据复制到当前几何体
+    if (tubeMesh && currentTubeGeometry) {
+      const oldPositions = currentTubeGeometry.getAttribute("position");
+      const newPositions = newTubeGeometry.getAttribute("position");
+
+      // 如果顶点数量相同，则复制数据
+      if (oldPositions.count === newPositions.count) {
+        oldPositions.copy(newPositions);
+        oldPositions.needsUpdate = true;
+      } else {
+        // 如果顶点数量不同，则直接替换几何体
+        tubeMesh.geometry = newTubeGeometry;
+        currentTubeGeometry = newTubeGeometry;
+      }
+    }
+  }
+
+  // 更新样条曲线（保留计算但不再渲染）
+  if (splineMesh && curve) {
+    const curvePoints = curve.getPoints(70);
+    const positions = splineMesh.geometry.getAttribute("position");
+
+    if (positions && positions.count === curvePoints.length) {
+      for (let i = 0; i < curvePoints.length; i++) {
+        positions.setXYZ(
+          i,
+          curvePoints[i].x,
+          curvePoints[i].y,
+          curvePoints[i].z
+        );
+      }
+      positions.needsUpdate = true;
+    }
+  }
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
   controls.update();
