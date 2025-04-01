@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-01 09:05:52
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-01 09:17:31
+ * @LastEditTime: 2025-04-01 09:21:29
  * @Description: 请填写简介
 -->
 <template>
@@ -15,6 +15,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import gsap from "gsap";
 let canvasRef = ref(null);
 let scene, camera, renderer, controls;
+let tubeMaterial;
 // 全局变量
 
 // 纹理参数
@@ -74,17 +75,40 @@ const init = () => {
   const curve = new THREE.CatmullRomCurve3(points);
   curve.type = "catmullrom";
 
+  // 创建曲线网格（仅用于计算，不添加到场景中）
+  const curvePoints = curve.getPoints(70);
+  const positionArray = new Float32Array(curvePoints.length * 3);
+  for (let i = 0; i < curvePoints.length; i++) {
+    positionArray[i * 3] = curvePoints[i].x;
+    positionArray[i * 3 + 1] = curvePoints[i].y;
+    positionArray[i * 3 + 2] = curvePoints[i].z;
+  }
+
+  const splineGeometry = new THREE.BufferGeometry();
+  splineGeometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(positionArray, 3)
+  );
+
+  const splineMesh = new THREE.Line(
+    splineGeometry,
+    new THREE.LineBasicMaterial()
+  );
+  // 注意：不再将splineMesh添加到场景中
+
   const tubeGeometry = new THREE.TubeGeometry(curve, 70, 0.02, 30, false);
   // 加载纹理
+  // 加载纹理并初始化
   const loader = new THREE.TextureLoader();
+  loader.crossOrigin = "Anonymous"; // 允许跨域加载
   loader.load("/img.jpg", function (texture) {
-    const tubeMaterial = new THREE.MeshBasicMaterial({
+    tubeMaterial = new THREE.MeshBasicMaterial({
       side: THREE.BackSide,
       map: texture,
     });
     tubeMaterial.map.wrapS = THREE.MirroredRepeatWrapping;
     tubeMaterial.map.wrapT = THREE.MirroredRepeatWrapping;
-    tubeMaterial.map.repeat.set(10, 4); // textureParams.repeatX, textureParams.repeatY
+    tubeMaterial.map.repeat.set(textureParams.repeatX, textureParams.repeatY);
 
     const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
     scene.add(tubeMesh);
@@ -113,8 +137,37 @@ const init = () => {
     },
     "-=5"
   );
+  // 初始化动画 - 相机抖动动画
+  const shake = gsap.timeline({ repeat: -1, repeatDelay: 5 });
+  shake.to(
+    cameraShake,
+    {
+      duration: 2,
+      x: -0.01,
+      ease: "rough({template: none, strength: 0.5, points: 100, taper: none, randomize: true, clamp: false})",
+    },
+    4
+  );
+  shake.to(cameraShake, {
+    duration: 2,
+    x: 0,
+    ease: "rough({template: none, strength: 0.5, points: 100, taper: none, randomize: true, clamp: false})",
+  });
+  // 当前几何体引用
+  let currentTubeGeometry = tubeGeometry;
 };
 const animate = () => {
+  // 更新材质偏移
+  tubeMaterial.map.offset.x = textureParams.offsetX;
+  tubeMaterial.map.offset.y += 0.001;
+  tubeMaterial.map.repeat.set(textureParams.repeatX, textureParams.repeatY);
+  // 更新相机位置
+  mouse.position.x += (mouse.target.x - mouse.position.x) / 50;
+  mouse.position.y += (mouse.target.y - mouse.position.y) / 50;
+  mouse.ratio.x = mouse.position.x / window.innerWidth;
+  mouse.ratio.y = mouse.position.y / window.innerHeight;
+  camera.position.x = mouse.ratio.x * 0.044 - 0.025 + cameraShake.x;
+  camera.position.y = mouse.ratio.y * 0.044 - 0.025;
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
   controls.update();
