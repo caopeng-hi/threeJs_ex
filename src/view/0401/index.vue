@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-01 09:05:52
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-01 09:26:47
+ * @LastEditTime: 2025-04-01 09:33:04
  * @Description: 请填写简介
 -->
 <template>
@@ -16,6 +16,10 @@ import gsap from "gsap";
 let canvasRef = ref(null);
 let scene, camera, renderer, controls;
 let tubeMaterial;
+let curve;
+let tubeMesh;
+let splineMesh;
+let currentTubeGeometry;
 // 全局变量
 
 // 纹理参数
@@ -31,7 +35,7 @@ const cameraShake = {
   y: 0,
 };
 // 鼠标状态
-const mouse = {
+let mouse = {
   position: new THREE.Vector2(0, 0),
   ratio: new THREE.Vector2(0, 0),
   target: new THREE.Vector2(0, 0),
@@ -72,7 +76,7 @@ const init = () => {
   }
   points[4].y = -0.06;
 
-  const curve = new THREE.CatmullRomCurve3(points);
+  curve = new THREE.CatmullRomCurve3(points);
   curve.type = "catmullrom";
 
   // 创建曲线网格（仅用于计算，不添加到场景中）
@@ -90,10 +94,7 @@ const init = () => {
     new THREE.BufferAttribute(positionArray, 3)
   );
 
-  const splineMesh = new THREE.Line(
-    splineGeometry,
-    new THREE.LineBasicMaterial()
-  );
+  splineMesh = new THREE.Line(splineGeometry, new THREE.LineBasicMaterial());
   // 注意：不再将splineMesh添加到场景中
 
   const tubeGeometry = new THREE.TubeGeometry(curve, 70, 0.02, 30, false);
@@ -110,7 +111,7 @@ const init = () => {
     tubeMaterial.map.wrapT = THREE.MirroredRepeatWrapping;
     tubeMaterial.map.repeat.set(textureParams.repeatX, textureParams.repeatY);
 
-    const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+    tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
     scene.add(tubeMesh);
   });
   const hyperSpace = gsap.timeline({ repeat: -1 });
@@ -154,13 +155,16 @@ const init = () => {
     ease: "rough({template: none, strength: 0.5, points: 100, taper: none, randomize: true, clamp: false})",
   });
   // 当前几何体引用
-  let currentTubeGeometry = tubeGeometry;
+  currentTubeGeometry = tubeGeometry;
 };
 const animate = () => {
-  // 更新材质偏移
-  tubeMaterial.map.offset.x = textureParams.offsetX;
-  tubeMaterial.map.offset.y += 0.001;
-  tubeMaterial.map.repeat.set(textureParams.repeatX, textureParams.repeatY);
+  if (tubeMaterial) {
+    // 更新材质偏移
+    tubeMaterial.map.offset.x = textureParams.offsetX;
+    tubeMaterial.map.offset.y += 0.001;
+    tubeMaterial.map.repeat.set(textureParams.repeatX, textureParams.repeatY);
+  }
+
   // 更新相机位置
   mouse.position.x += (mouse.target.x - mouse.position.x) / 50;
   mouse.position.y += (mouse.target.y - mouse.position.y) / 50;
