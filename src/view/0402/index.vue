@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-02 09:01:16
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-02 10:01:27
+ * @LastEditTime: 2025-04-02 10:06:19
  * @Description: 请填写简介
 -->
 <template>
@@ -30,10 +30,20 @@ let floorLevel = -100; // 地板位置
 let floor; // 地板
 let dotsPerInterval;
 let geometry, material; // 球的几何体和材质
+let interval = null; // 定时器
 onMounted(() => {
   init();
   animate();
+  interval = setInterval(initShaper, 15);
   window.addEventListener("mousemove", mouseMove, false);
+  document.addEventListener("click", () => {
+    if (interval) {
+      clearInterval(interval);
+      return (interval = null);
+    } else {
+      return (interval = setInterval(initShaper, 15));
+    }
+  });
 });
 const init = () => {
   // 创建场景
@@ -80,7 +90,7 @@ const animate = () => {
   requestAnimationFrame(animate);
   renderer.render(scene, camera); // 渲染场景
   controls.update(); // 更新控制器
-  initShaper();
+  //   initShaper();
 };
 const initShaper = () => {
   let i, j, k, ref, ref1, results, v;
