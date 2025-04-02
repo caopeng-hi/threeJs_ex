@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-02 09:04:33
+ * @LastEditTime: 2025-04-02 10:14:26
  * @Description: 请填写简介
 -->
 
@@ -65,3 +65,8 @@
   [时空隧道](https://github.com/caopeng-hi/img/blob/main/3c398720d528733657b4e4f661cb7a8.png)
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/3c398720d528733657b4e4f661cb7a8.png" alt="灯光效果">
+
+- 0402 重力小球下落
+  [重力小球下落](https://github.com/caopeng-hi/img/blob/main/20250402_100753.gif)
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250402_100753.gif" alt="重力小球下落">
