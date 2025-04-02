@@ -4,7 +4,7 @@
 <script setup>
 // 导入Three.js核心库和Vue组合式API
 import * as THREE from "three";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 // 导入轨道控制器（允许用户用鼠标交互控制场景）
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
@@ -38,14 +38,9 @@ onMounted(() => {
   window.addEventListener("mousemove", mouseMove, false);
 
   // 点击事件：切换球体生成状态
-  document.addEventListener("click", () => {
-    if (interval) {
-      clearInterval(interval); // 停止生成球体
-      interval = null;
-    } else {
-      interval = setInterval(initShaper, 15); // 恢复生成球体
-    }
-  });
+  document.addEventListener("click", handelClick, false);
+  // 监听窗口大小变化
+  window.addEventListener("resize", handelResize, false);
 });
 
 // 初始化3D场景
@@ -239,5 +234,25 @@ const mouseMove = (event) => {
 const random = (min, max) => {
   return Math.floor(Math.random() * max) + min;
 };
+const handelClick = () => {
+  if (interval) {
+    clearInterval(interval); // 停止生成球体
+    interval = null;
+  } else {
+    interval = setInterval(initShaper, 15); // 恢复生成球体
+  }
+};
+const handelResize = () => {
+  // 更新相机
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  // 更新渲染器
+  renderer.setSize(window.innerWidth, window.innerHeight);
+};
+onBeforeUnmount(() => {
+  window.removeEventListener("mousemove", mouseMove);
+  document.removeEventListener("click", handelClick);
+  window.removeEventListener("resize", handelResize);
+});
 </script>
 <style lang="scss" scoped></style>
