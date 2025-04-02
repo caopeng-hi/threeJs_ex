@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-02 09:01:16
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-02 09:57:14
+ * @LastEditTime: 2025-04-02 10:01:27
  * @Description: 请填写简介
 -->
 <template>
@@ -19,6 +19,8 @@ let scene, camera, renderer, controls; // 场景、相机、渲染器、控制�
 let colors = ["#da6b00", "#8555d4", "#4ad3b5", "#ffffff"];
 let radius = 5; // 圆的半径
 let mouse = new THREE.Vector2(); // 鼠标位置
+let vector = new THREE.Vector3(); // 三维向量
+let direction = new THREE.Vector3(); // 方向向量
 let canvasMouse = new THREE.Vector3(0, 0, 0); // 画布上的鼠标位置
 let spheresInfo = {}; // 球的信息
 let sphereIndex = 0; // 球的索引
@@ -31,6 +33,7 @@ let geometry, material; // 球的几何体和材质
 onMounted(() => {
   init();
   animate();
+  window.addEventListener("mousemove", mouseMove, false);
 });
 const init = () => {
   // 创建场景
@@ -170,6 +173,17 @@ const drawDot = (info) => {
     delete spheresInfo[info.ID];
     return scene.remove(info.sphere);
   }
+};
+const mouseMove = (event) => {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  vector = new THREE.Vector3(mouse.x || 0, mouse.y || 0, 0);
+  vector.unproject(camera);
+  const dir = vector.sub(camera.position).normalize();
+  const distance = -camera.position.z / dir.z;
+  return (canvasMouse = camera.position
+    .clone()
+    .add(dir.multiplyScalar(distance)));
 };
 const random = (min, max) => {
   return Math.floor(Math.random() * max) + min;
