@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-02 09:01:16
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-02 09:24:06
+ * @LastEditTime: 2025-04-02 09:30:29
  * @Description: 请填写简介
 -->
 <template>
@@ -33,6 +33,10 @@ onMounted(() => {
 const init = () => {
   // 创建场景
   scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xffffff);
+  // 添加辅助坐标轴
+  const axesHelper = new THREE.AxesHelper(100); // 100表示坐标轴长度
+  scene.add(axesHelper);
   // 创建相机
   camera = new THREE.PerspectiveCamera(
     45,
@@ -44,7 +48,6 @@ const init = () => {
   camera.position.z = 600;
   // 创建渲染器
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setClearColor("#4e4d70");
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   canvasRef.value.appendChild(renderer.domElement);
@@ -56,16 +59,12 @@ const init = () => {
   // 监听性能
 
   // 添加物体
-  const geometry = new THREE.BufferGeometry(
-    floorDimensions,
-    5,
-    floorDimensions
-  );
+  const geometry = new THREE.BoxGeometry(floorDimensions, 5, floorDimensions);
   const material = new THREE.MeshLambertMaterial({
     color: "#000000",
     depthWrite: false,
     transparent: true, // 开启透明
-    opacity: 0.2, // 设置透明度
+    opacity: 1, // 设置透明度
   });
   floor = new THREE.Mesh(geometry, material);
   floor.position.y = floorLevel - radius / 2;
