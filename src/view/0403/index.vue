@@ -116,6 +116,14 @@ const init = () => {
   var hemiLight = new THREE.HemisphereLight(0x000000, 0x1111111, 20);
   hemiLight.position.set(-1, -1, 2);
   luminor.add(hemiLight);
+
+  lights[1] = new THREE.DirectionalLight(0x000000, 7);
+  lights[1].position.set(-1, 0, 0.5);
+  lights[2] = new THREE.DirectionalLight(0x000000, 7);
+  lights[2].position.set(1, 0, 0.5);
+
+  scene.add(lights[1]);
+  scene.add(lights[2]);
 };
 const animate = () => {
   // 渲染场景和相机
