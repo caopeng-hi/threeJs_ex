@@ -70,3 +70,11 @@
   [重力小球下落](https://github.com/caopeng-hi/img/blob/main/20250402_100753.gif)
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250402_100753.gif" alt="重力小球下落">
+
+- 0403 光圈地球
+  [光圈地球](https://github.com/caopeng-hi/img/blob/main/20250403_095050.gif)
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250403_095050.gif" alt="光圈地球">
+
+- 0404 粒子发光球体
+  [粒子发光球体](https://github.com/caopeng-hi/img/blob/main/20250404_095855.gif)
