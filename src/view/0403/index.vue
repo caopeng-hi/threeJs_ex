@@ -127,6 +127,14 @@ const init = () => {
   scene.add(lights[2]);
 };
 const animate = () => {
+  var timer = 0.0001 * Date.now();
+  particle.rotation.x += 0.0;
+  particle.rotation.y -= 0.004;
+  circle.rotation.x -= 0.001;
+  circle.rotation.y -= 0.001;
+  halo.rotation.z -= 0.005;
+  luminor.rotation.z -= 0.005;
+  renderer.clear();
   // 渲染场景和相机
   renderer.render(scene, camera);
   // 循环调用animate函数
