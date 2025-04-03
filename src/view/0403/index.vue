@@ -78,14 +78,14 @@ const init = () => {
     color: 0xe3d1af,
     emissive: 0x000000,
     shading: THREE.SmoothShading,
-    map: THREE.ImageUtils.loadTexture(
+    map: new THREE.TextureLoader().load(
       "https://upload.wikimedia.org/wikipedia/commons/2/2c/Generic_Celestia_asteroid_texture.jpg"
     ),
-    bumpMap: THREE.ImageUtils.loadTexture(
+    bumpMap: new THREE.TextureLoader().load(
       "https://upload.wikimedia.org/wikipedia/commons/2/2c/Generic_Celestia_asteroid_texture.jpg"
     ),
     bumpScale: 0.025,
-    specularMap: THREE.ImageUtils.loadTexture(
+    specularMap: new THREE.TextureLoader().load(
       "https://upload.wikimedia.org/wikipedia/commons/2/2c/Generic_Celestia_asteroid_texture.jpg"
     ),
     specular: new THREE.Color("grey"),
