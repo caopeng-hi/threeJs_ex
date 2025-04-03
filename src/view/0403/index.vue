@@ -58,18 +58,17 @@ const init = () => {
   scene.add(halo);
   scene.add(luminor);
 
-  var geometry = new THREE.TetrahedronGeometry(1, 1);
-  var geo_planet = new THREE.SphereGeometry(10, 64, 32);
-  var geom3 = new THREE.SphereGeometry(16, 32, 16);
-  var geo_star = new THREE.SphereGeometry(90, 64, 64);
+  let geometry = new THREE.TetrahedronGeometry(1, 1);
+  let geo_planet = new THREE.SphereGeometry(10, 64, 32);
+  let geom3 = new THREE.SphereGeometry(16, 32, 16);
 
-  var material = new THREE.MeshPhongMaterial({
+  let material = new THREE.MeshPhongMaterial({
     color: 0x111111,
-    shading: THREE.FlatShading,
+    flatShading: true,
   });
 
-  for (var i = 0; i < 500; i++) {
-    var mesh = new THREE.Mesh(geometry, material);
+  for (let i = 0; i < 500; i++) {
+    let mesh = new THREE.Mesh(geometry, material);
     mesh.position
       .set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
       .normalize();
@@ -77,60 +76,59 @@ const init = () => {
     mesh.rotation.set(Math.random() * 2, Math.random() * 2, Math.random() * 2);
     particle.add(mesh);
   }
-  var mat = new THREE.MeshPhongMaterial({
+  let mat = new THREE.MeshPhongMaterial({
     color: 0xe3d1af,
     emissive: 0x000000,
-    shading: THREE.SmoothShading,
+    flatShading: false,
     map: new THREE.TextureLoader().load(
-      "https://upload.wikimedia.org/wikipedia/commons/2/2c/Generic_Celestia_asteroid_texture.jpg"
+      "/Generic_Celestia_asteroid_texture.jpg"
     ),
     bumpMap: new THREE.TextureLoader().load(
-      "https://upload.wikimedia.org/wikipedia/commons/2/2c/Generic_Celestia_asteroid_texture.jpg"
+      "/Generic_Celestia_asteroid_texture.jpg"
     ),
     bumpScale: 0.025,
     specularMap: new THREE.TextureLoader().load(
-      "https://upload.wikimedia.org/wikipedia/commons/2/2c/Generic_Celestia_asteroid_texture.jpg"
+      "/Generic_Celestia_asteroid_texture.jpg"
     ),
     specular: new THREE.Color("grey"),
   });
-  var mat3 = new THREE.ShaderMaterial({
+  let mat3 = new THREE.ShaderMaterial({
     uniforms: {},
-    vertexShader: document.getElementById("vertexShader").textContent,
-    fragmentShader: document.getElementById("fragmentShader").textContent,
+    vertexShader: vertexShader,
+    fragmentShader: fragmentShader,
     side: THREE.BackSide,
     blending: THREE.AdditiveBlending,
     transparent: true,
   });
-  var planet = new THREE.Mesh(geo_planet, mat);
+  let planet = new THREE.Mesh(geo_planet, mat);
   planet.scale.x = planet.scale.y = planet.scale.z = 15;
   circle.add(planet);
 
-  var ball = new THREE.Mesh(geom3, mat3);
+  let ball = new THREE.Mesh(geom3, mat3);
   ball.scale.x = ball.scale.y = ball.scale.z = 16;
   halo.add(ball);
 
-  var ball2 = new THREE.Mesh(geom3, mat3);
+  let ball2 = new THREE.Mesh(geom3, mat3);
   ball2.scale.x = ball2.scale.y = ball2.scale.z = 12;
   ball2.position.set(25, 5, 1);
   halo.add(ball2);
 
-  var ambientLight = new THREE.AmbientLight(0x000000);
+  let ambientLight = new THREE.AmbientLight(0x000000);
   scene.add(ambientLight);
 
-  var hemiLight = new THREE.HemisphereLight(0x000000, 0x1111111, 20);
+  let hemiLight = new THREE.HemisphereLight(0x000000, 0x1111111, 20);
   hemiLight.position.set(-1, -1, 2);
   luminor.add(hemiLight);
 
-  lights[1] = new THREE.DirectionalLight(0x000000, 7);
-  lights[1].position.set(-1, 0, 0.5);
-  lights[2] = new THREE.DirectionalLight(0x000000, 7);
-  lights[2].position.set(1, 0, 0.5);
+  const lights1 = new THREE.DirectionalLight(0x000000, 7);
+  lights1.position.set(-1, 0, 0.5);
+  const lights2 = new THREE.DirectionalLight(0x000000, 7);
+  lights2.position.set(1, 0, 0.5);
 
-  scene.add(lights[1]);
-  scene.add(lights[2]);
+  scene.add(lights1);
+  scene.add(lights2);
 };
 const animate = () => {
-  var timer = 0.0001 * Date.now();
   particle.rotation.x += 0.0;
   particle.rotation.y -= 0.004;
   circle.rotation.x -= 0.001;
@@ -150,5 +148,8 @@ function onWindowResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", onWindowResize, false);
+});
 </script>
 <style></style>
