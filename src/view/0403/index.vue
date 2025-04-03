@@ -15,6 +15,7 @@ let circle, particle, halo, luminor;
 onMounted(() => {
   init();
   animate();
+  window.addEventListener("resize", onWindowResize, false);
 });
 const init = () => {
   // 创建场景并设置背景色
@@ -133,5 +134,10 @@ const animate = () => {
   // 更新控制器
   controls.update();
 };
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
 </script>
 <style></style>
