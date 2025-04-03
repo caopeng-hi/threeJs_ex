@@ -7,6 +7,9 @@ import * as THREE from "three";
 import { ref, onMounted, onBeforeUnmount } from "vue";
 // 导入轨道控制器（允许用户用鼠标交互控制场景）
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+// 导入着色器
+import vertexShader from "../../shader/0403/vert.glsl?raw"; // 顶点着色器
+import fragmentShader from "../../shader/0403/frag.glsl?raw"; // 片元着色器
 
 // Vue ref引用，用于挂载Three.js渲染器DOM元素
 const canvasRef = ref(null);
