@@ -11,7 +11,7 @@ import vertexShader from "../../shader/0407/vert.glsl?raw"; // 顶点着色器
 import fragmentShader from "../../shader/0407/frag.glsl?raw"; // 片元着色器
 import { ref, onMounted } from "vue";
 const canvasRef = ref(null);
-let renderer, scene, camera, controls;
+let renderer, scene, camera, controls, material;
 let texture;
 let uniforms = {
   u_time: { type: "f", value: 1.0 },
@@ -19,6 +19,7 @@ let uniforms = {
   u_noise: { type: "t", value: texture },
   u_mouse: { type: "v2", value: new THREE.Vector2() },
 };
+const clock = new THREE.Clock(); // 创建一个时钟，用于计算时间差
 onMounted(() => {
   init();
   animate();
@@ -57,16 +58,21 @@ const init = () => {
     }
   );
   let geometry = new THREE.PlaneGeometry(2, 2);
-  let material = new THREE.ShaderMaterial({
+  material = new THREE.ShaderMaterial({
     uniforms: uniforms,
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
   });
+  let mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
 };
 const animate = () => {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
+
+  const delta = clock.getDelta();
+  material.uniforms.u_time.value = -10000 + delta * 0.0005;
 };
 </script>
 <style></style>
