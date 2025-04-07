@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-07 10:50:54
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-07 12:51:04
+ * @LastEditTime: 2025-04-07 14:42:35
  * @Description: 请填写简介
 -->
 <template>
@@ -98,10 +98,9 @@ const animate = () => {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
-
+  const delta = clock.getDelta();
   if (material) {
-    const delta = clock.getDelta();
-    material.uniforms.u_time.value = -10000 + delta * 0.0005;
+    material.uniforms.u_time.value += delta * 0.5;
   }
 };
 </script>
