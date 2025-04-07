@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-02 10:14:26
+ * @LastEditTime: 2025-04-07 14:47:30
  * @Description: 请填写简介
 -->
 
@@ -76,5 +76,7 @@
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250403_095050.gif" alt="光圈地球">
 
-- 0404 粒子发光球体
-  [粒子发光球体](https://github.com/caopeng-hi/img/blob/main/20250404_095855.gif)
+- 0407 黄昏飞扬尘埃
+  [黄昏飞扬尘埃](https://github.com/caopeng-hi/img/blob/main/20250407_144318.gif)
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250407_144318.gif" alt="黄昏飞扬尘埃">
