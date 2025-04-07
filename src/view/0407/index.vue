@@ -1,3 +1,10 @@
+<!--
+ * @Author: caopeng
+ * @Date: 2025-04-07 10:50:54
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-04-07 12:45:30
+ * @Description: 请填写简介
+-->
 <template>
   <div class="canvasRef" ref="canvasRef"></div>
 </template>
@@ -27,7 +34,11 @@ onMounted(() => {
 const init = () => {
   // 创建场景并设置背景色
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000);
+  scene.background = new THREE.Color(0xffffff);
+  // 添加辅助坐标轴
+  const axesHelper = new THREE.AxesHelper(100);
+  scene.add(axesHelper);
+
   // 创建透视相机
   camera = new THREE.PerspectiveCamera(
     45,
@@ -46,33 +57,45 @@ const init = () => {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
 
-  let loader = new THREE.TextureLoader(); // 加载纹理
+  const loader = new THREE.TextureLoader();
   loader.setCrossOrigin("anonymous");
   loader.load(
     "https://s3-us-west-2.amazonaws.com/s.cdpn.io/982762/noise.png",
-    function do_something_with_texture(tex) {
+    (tex) => {
       texture = tex;
       texture.wrapS = THREE.RepeatWrapping;
       texture.wrapT = THREE.RepeatWrapping;
       texture.minFilter = THREE.LinearFilter;
+
+      // 更新uniforms中的纹理引用
+      uniforms.u_noise.value = texture;
+
+      // 创建材质和网格(确保纹理加载完成后再创建)
+      material = new THREE.ShaderMaterial({
+        uniforms: uniforms,
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        side: THREE.DoubleSide, // 添加这一行确保双面渲染
+      });
+
+      // 使用BufferGeometry而不是Geometry(更高效)
+      let geometry = new THREE.PlaneGeometry(2, 2);
+      let mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
     }
   );
-  let geometry = new THREE.PlaneGeometry(2, 2);
-  material = new THREE.ShaderMaterial({
-    uniforms: uniforms,
-    vertexShader: vertexShader,
-    fragmentShader: fragmentShader,
-  });
-  let mesh = new THREE.Mesh(geometry, material);
-  scene.add(mesh);
+
+  // 初始化分辨率uniform
+  uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
 };
 const animate = () => {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
 
-  const delta = clock.getDelta();
-  material.uniforms.u_time.value = -10000 + delta * 0.0005;
+  // const delta = clock.getDelta();
+
+  // material.uniforms.u_time.value = -10000 + delta * 0.0005;
 };
 </script>
 <style></style>
