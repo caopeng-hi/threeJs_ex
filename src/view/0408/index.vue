@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-08 09:15:55
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 10:19:12
+ * @LastEditTime: 2025-04-08 10:30:55
  * @Description: 请填写简介
 -->
 <template>
@@ -36,9 +36,17 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 
 import { ref, onMounted } from "vue";
 const canvasRef = ref(null);
-let renderer, scene, camera, controls, composer;
+let renderer,
+  scene,
+  camera,
+  controls,
+  composer,
+  fireMat,
+  ashesMat,
+  floorMat,
+  fireplaceMat;
 let clock = new THREE.Clock(); // 创建一个时钟，用于计算时间差
-let timer = 0;
+let time = 0;
 let deltaTime = 0;
 let fireSpeed = 1;
 let stylize = false;
@@ -59,8 +67,14 @@ const init = async () => {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
   // 添加辅助坐标轴
-  const axesHelper = new THREE.AxesHelper(5);
-  scene.add(axesHelper);
+  //   const axesHelper = new THREE.AxesHelper(5);
+  //   scene.add(axesHelper);
+  // 添加环境光
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambientLight);
+  // 添加平行光
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(0, 3, 0);
 
   // 创建透视相机
   camera = new THREE.PerspectiveCamera(
@@ -95,7 +109,7 @@ const init = async () => {
   const model = await loadModel();
   const fireplace = model.getObjectByName("fireplace");
   fireUniforms.map.value.fireplaceMap = fireplace.material.map;
-  const fireplaceMat = new THREE.ShaderMaterial({
+  fireplaceMat = new THREE.ShaderMaterial({
     uniforms: fireUniforms,
     vertexShader: vertexModelShader,
     fragmentShader: fragmentModelShader,
@@ -105,7 +119,7 @@ const init = async () => {
   // 加载地板
   const floor = model.getObjectByName("floor");
   const floorMap = floor.material.map;
-  const floorMat = fireplaceMat.clone();
+  floorMat = fireplaceMat.clone();
   floorMat.uniforms.map.value = floorMap;
   floor.material = floorMat;
 
@@ -120,11 +134,19 @@ const init = async () => {
   createPostProcessing(); // 创建后期处理
 };
 const animate = () => {
+  deltaTime = clock.getDelta();
+  time += deltaTime;
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
   if (composer) {
     composer.render();
+  }
+  if (fireMat && ashesMat) {
+    updateFire();
+  }
+  if (floorMat && fireplaceMat) {
+    updateLight();
   }
 };
 const loadModel = () => {
@@ -149,7 +171,7 @@ const loadTexture = () => {
   });
 };
 const createFire = async () => {
-  const fireMat = new THREE.ShaderMaterial({
+  fireMat = new THREE.ShaderMaterial({
     uniforms: {
       noiseMap: { value: await loadTexture() },
       time: { value: 0 },
@@ -183,7 +205,7 @@ const createFire = async () => {
   return fire;
 };
 const createAshes = async () => {
-  const ashesMat = new THREE.ShaderMaterial({
+  ashesMat = new THREE.ShaderMaterial({
     uniforms: {
       noiseMap: { value: await loadTexture() },
       intensity: { value: 1 },
@@ -225,6 +247,25 @@ const createPostProcessing = () => {
   composer.addPass(renderScene);
   composer.addPass(bloomPass);
   composer.addPass(outputPass);
+};
+const updateFire = () => {
+  fireMat.uniforms.time.value = time * fireSpeed;
+  ashesMat.uniforms.time.value = time * fireSpeed;
+};
+const updateLight = () => {
+  const r = Math.abs(Math.sin(time) + Math.cos(time * 4 + 0.1) * 0.5) * 0.2;
+  const g =
+    Math.abs(Math.sin(time + Math.PI / 2) + Math.cos(time * 4 + 1.4) * 0.5) *
+    0.2;
+  const b = Math.abs(Math.sin(time + Math.PI)) * 0.2;
+
+  floorMat.uniforms.ratioR.value = 0.1 + r * 3;
+  floorMat.uniforms.ratioG.value = 0.1 + g * 3;
+  floorMat.uniforms.ratioB.value = 0.1 + b * 3;
+
+  fireplaceMat.uniforms.ratioR.value = 0.0 + r * 1.5;
+  fireplaceMat.uniforms.ratioG.value = 0.0 + g * 1.5;
+  fireplaceMat.uniforms.ratioB.value = 0.0 + b * 1.5;
 };
 </script>
 <style></style>
