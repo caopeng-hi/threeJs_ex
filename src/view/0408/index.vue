@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-08 09:15:55
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 10:43:59
+ * @LastEditTime: 2025-04-08 10:52:37
  * @Description: 请填写简介
 -->
 <template>
@@ -49,7 +49,6 @@ let clock = new THREE.Clock(); // 创建一个时钟，用于计算时间差
 let time = 0;
 let deltaTime = 0;
 let fireSpeed = 1;
-let stylize = false;
 
 onMounted(() => {
   init();
@@ -59,13 +58,6 @@ const init = async () => {
   // 创建场景并设置背景色
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
-
-  // 添加环境光
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-  scene.add(ambientLight);
-  // 添加平行光
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(0, 3, 0);
 
   // 创建透视相机
   camera = new THREE.PerspectiveCamera(
@@ -96,32 +88,10 @@ const init = async () => {
   controls.maxPolarAngle = Math.PI / 2 - 0.1;
   controls.target = new THREE.Vector3(0, 0.3, 0);
 
-  // 加载模型
-  const model = await loadModel();
-  const fireplace = model.getObjectByName("fireplace");
-  const fireplaceMap = fireplace.material.map;
-  fireplaceMat = new THREE.ShaderMaterial({
-    uniforms: {
-      map: { value: fireplaceMap },
-      ratioR: { value: 0.0 },
-      ratioG: { value: 1.0 },
-      ratioB: { value: 0.0 },
-      gamma: { value: 1 },
-    },
-    vertexShader: vertexModelShader,
-    fragmentShader: fragmentModelShader,
-  });
-  fireplace.material = fireplaceMat;
-
-  // 加载地板
-  const floor = model.getObjectByName("floor");
-  const floorMap = floor.material.map;
-  floorMat = fireplaceMat.clone();
-  floorMat.uniforms.map.value = floorMap;
-  floor.material = floorMat;
-
+  const { fireplace, floor } = await createModel();
   scene.add(fireplace);
   scene.add(floor);
+
   const fire = await createFire(); // 创建火焰
   fireplace.add(fire); // 将火焰添加到火盆中
 
@@ -264,6 +234,33 @@ const updateLight = () => {
   fireplaceMat.uniforms.ratioR.value = 0.0 + r * 1.5;
   fireplaceMat.uniforms.ratioG.value = 0.0 + g * 1.5;
   fireplaceMat.uniforms.ratioB.value = 0.0 + b * 1.5;
+};
+const createModel = async () => {
+  // 加载模型
+  const model = await loadModel();
+  const fireplace = model.getObjectByName("fireplace");
+  const fireplaceMap = fireplace.material.map;
+  fireplaceMat = new THREE.ShaderMaterial({
+    uniforms: {
+      map: { value: fireplaceMap },
+      ratioR: { value: 0.0 },
+      ratioG: { value: 1.0 },
+      ratioB: { value: 0.0 },
+      gamma: { value: 1 },
+    },
+    vertexShader: vertexModelShader,
+    fragmentShader: fragmentModelShader,
+  });
+  fireplace.material = fireplaceMat;
+
+  // 加载地板
+  const floor = model.getObjectByName("floor");
+  const floorMap = floor.material.map;
+  floorMat = fireplaceMat.clone();
+  floorMat.uniforms.map.value = floorMap;
+  floor.material = floorMat;
+
+  return { fireplace, floor };
 };
 </script>
 <style></style>
