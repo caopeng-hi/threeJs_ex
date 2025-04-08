@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-08 09:15:55
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 10:30:55
+ * @LastEditTime: 2025-04-08 10:34:45
  * @Description: 请填写简介
 -->
 <template>
@@ -51,13 +51,6 @@ let deltaTime = 0;
 let fireSpeed = 1;
 let stylize = false;
 
-let fireUniforms = {
-  map: { value: {} },
-  ratioR: { value: 0.0 },
-  ratioG: { value: 1.0 },
-  ratioB: { value: 0.0 },
-  gamma: { value: 1 },
-};
 onMounted(() => {
   init();
   animate();
@@ -66,9 +59,7 @@ const init = async () => {
   // 创建场景并设置背景色
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
-  // 添加辅助坐标轴
-  //   const axesHelper = new THREE.AxesHelper(5);
-  //   scene.add(axesHelper);
+
   // 添加环境光
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
@@ -108,9 +99,15 @@ const init = async () => {
   // 加载模型
   const model = await loadModel();
   const fireplace = model.getObjectByName("fireplace");
-  fireUniforms.map.value.fireplaceMap = fireplace.material.map;
+  const fireplaceMap = fireplace.material.map;
   fireplaceMat = new THREE.ShaderMaterial({
-    uniforms: fireUniforms,
+    uniforms: {
+      map: { value: fireplaceMap },
+      ratioR: { value: 0.0 },
+      ratioG: { value: 1.0 },
+      ratioB: { value: 0.0 },
+      gamma: { value: 1 },
+    },
     vertexShader: vertexModelShader,
     fragmentShader: fragmentModelShader,
   });
@@ -171,9 +168,10 @@ const loadTexture = () => {
   });
 };
 const createFire = async () => {
+  const texture = await loadTexture();
   fireMat = new THREE.ShaderMaterial({
     uniforms: {
-      noiseMap: { value: await loadTexture() },
+      noiseMap: { value: texture },
       time: { value: 0 },
       opacity: { value: 1 },
       intensity: { value: 1 },
