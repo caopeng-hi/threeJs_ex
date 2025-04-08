@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-08 09:15:55
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 09:32:32
+ * @LastEditTime: 2025-04-08 09:45:05
  * @Description: 请填写简介
 -->
 <template>
@@ -29,8 +29,9 @@ let timer = 0;
 let deltaTime = 0;
 let fireSpeed = 1;
 let stylize = false;
+
 let fireUniforms = {
-  map: { value: fireplaceMap },
+  map: { value: {} },
   ratioR: { value: 0.0 },
   ratioG: { value: 1.0 },
   ratioB: { value: 0.0 },
@@ -66,13 +67,25 @@ const init = async () => {
   controls.dampingFactor = 0.05;
 
   // 加载模型
-  const fireplace = await loadModel();
+  const model = await loadModel();
+  const fireplace = model.getObjectByName("fireplace");
   fireUniforms.map.value.fireplaceMap = fireplace.material.map;
   const fireplaceMat = new THREE.ShaderMaterial({
     uniforms: fireUniforms,
     vertexShader: vertexFireShader,
     fragmentShader: fragmentFireShader,
   });
+  fireplace.material = fireplaceMat;
+
+  // 加载地板
+  const floor = model.getObjectByName("floor");
+  const floorMap = floor.material.map;
+  const floorMat = fireplaceMat.clone();
+  floorMat.uniforms.map.value = floorMap;
+  floor.material = floorMat;
+
+  scene.add(fireplace);
+  scene.add(floor);
 };
 const animate = () => {
   requestAnimationFrame(animate);
