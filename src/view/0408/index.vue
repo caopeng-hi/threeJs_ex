@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-08 09:15:55
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 10:52:37
+ * @LastEditTime: 2025-04-08 10:59:20
  * @Description: 请填写简介
 -->
 <template>
@@ -33,6 +33,8 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 // 导入draco解码器
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+// 导入GUI
+import { GUI } from "three/examples/jsm/libs/lil-gui.module.min";
 
 import { ref, onMounted } from "vue";
 const canvasRef = ref(null);
@@ -44,11 +46,14 @@ let renderer,
   fireMat,
   ashesMat,
   floorMat,
-  fireplaceMat;
+  fireplaceMat,
+  bloomPass;
 let clock = new THREE.Clock(); // 创建一个时钟，用于计算时间差
 let time = 0;
 let deltaTime = 0;
-let fireSpeed = 1;
+let fireSpeed = {
+  value: 1,
+};
 
 onMounted(() => {
   init();
@@ -99,6 +104,7 @@ const init = async () => {
   fireplace.add(ashes); // 将灰烬添加到火盆中
 
   createPostProcessing(); // 创建后期处理
+  createGUI();
 };
 const animate = () => {
   deltaTime = clock.getDelta();
@@ -201,10 +207,9 @@ const createAshes = async () => {
   ashes.rotation.y = -Math.PI / 2;
   return ashes;
 };
-const createGUI = () => {};
 const createPostProcessing = () => {
   const renderScene = new RenderPass(scene, camera);
-  const bloomPass = new UnrealBloomPass(
+  bloomPass = new UnrealBloomPass(
     new THREE.Vector2(1024, 1024),
     0.25,
     0.1,
@@ -217,8 +222,8 @@ const createPostProcessing = () => {
   composer.addPass(outputPass);
 };
 const updateFire = () => {
-  fireMat.uniforms.time.value = time * fireSpeed;
-  ashesMat.uniforms.time.value = time * fireSpeed;
+  fireMat.uniforms.time.value = time * fireSpeed.value;
+  ashesMat.uniforms.time.value = time * fireSpeed.value;
 };
 const updateLight = () => {
   const r = Math.abs(Math.sin(time) + Math.cos(time * 4 + 0.1) * 0.5) * 0.2;
@@ -261,6 +266,25 @@ const createModel = async () => {
   floor.material = floorMat;
 
   return { fireplace, floor };
+};
+const createGUI = () => {
+  const gui = new GUI();
+  gui.add(fireSpeed, "value", 0.1, 3).name("Speed");
+  gui.add(fireMat.uniforms.opacity, "value", 0, 1).name("Opacity");
+
+  gui.add(fireMat.uniforms.intensity, "value", 0.5, 1.5).name("Intensity");
+
+  gui.add(fireMat.uniforms.details, "value", 0, 2).name("Details");
+
+  gui.add(fireMat.uniforms.stylizeRatio, "value", 0, 1).name("Stylize Ratio");
+
+  gui
+    .add(fireMat.uniforms.stylizeThreshold, "value", 0, 1)
+    .name("Stylise Threshold");
+
+  gui.add(fireMat.uniforms.grayscale, "value").name("Grayscale");
+
+  gui.add(bloomPass, "strength", 0, 2).name("bloom");
 };
 </script>
 <style></style>
