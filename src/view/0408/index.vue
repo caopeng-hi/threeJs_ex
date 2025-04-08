@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-08 09:15:55
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 10:00:29
+ * @LastEditTime: 2025-04-08 10:19:12
  * @Description: 请填写简介
 -->
 <template>
@@ -20,6 +20,15 @@ import vertexFireShader from "../../shader/0408/vertFire.glsl?raw"; // 顶点着
 import fragmentFireShader from "../../shader/0408/fragFire.glsl?raw"; // 片元着色器
 import fragmentAshesShader from "../../shader/0408/fragAshes.glsl?raw"; // 片元着色器
 
+// 导入RenderPass
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+// 导入UnrealBloomPass
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+// 导入OutputPass
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
+// 导入EffectComposer
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+
 // 导入glb-loader
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 // 导入draco解码器
@@ -27,7 +36,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 
 import { ref, onMounted } from "vue";
 const canvasRef = ref(null);
-let renderer, scene, camera, controls;
+let renderer, scene, camera, controls, composer;
 let clock = new THREE.Clock(); // 创建一个时钟，用于计算时间差
 let timer = 0;
 let deltaTime = 0;
@@ -62,16 +71,25 @@ const init = async () => {
   );
   camera.position.set(0, 0.5, 1.5);
   // 创建渲染器
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    preserveDrawingBuffer: true,
+  });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.toneMapping = THREE.LinearToneMapping;
+  renderer.toneMappingExposure = 1;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.VSMShadowMap;
+  renderer.localClippingEnabled = true;
   canvasRef.value.appendChild(renderer.domElement);
   // 创建控制器
   controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
+  controls.minDistance = 0;
+  controls.maxDistance = 20;
+  controls.enabled = true;
+  controls.maxPolarAngle = Math.PI / 2 - 0.1;
+  controls.target = new THREE.Vector3(0, 0.3, 0);
 
   // 加载模型
   const model = await loadModel();
@@ -95,14 +113,22 @@ const init = async () => {
   scene.add(floor);
   const fire = await createFire(); // 创建火焰
   fireplace.add(fire); // 将火焰添加到火盆中
+
+  const ashes = await createAshes(); // 创建灰烬
+  fireplace.add(ashes); // 将灰烬添加到火盆中
+
+  createPostProcessing(); // 创建后期处理
 };
 const animate = () => {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
+  if (composer) {
+    composer.render();
+  }
 };
 const loadModel = () => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const loader = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath("./draco/");
@@ -169,6 +195,36 @@ const createAshes = async () => {
     vertexShader: vertexFireShader,
     fragmentShader: fragmentAshesShader,
   });
+
+  const ashesGeom = new THREE.CylinderGeometry(
+    0.15,
+    0.15,
+    0.4,
+    15,
+    15,
+    true,
+    -Math.PI / 2,
+    Math.PI
+  );
+  const ashes = new THREE.Mesh(ashesGeom, ashesMat);
+  ashes.position.set(0.1, 0.1, 0);
+  ashes.rotation.y = -Math.PI / 2;
+  return ashes;
+};
+const createGUI = () => {};
+const createPostProcessing = () => {
+  const renderScene = new RenderPass(scene, camera);
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(1024, 1024),
+    0.25,
+    0.1,
+    0.8
+  );
+  const outputPass = new OutputPass();
+  composer = new EffectComposer(renderer);
+  composer.addPass(renderScene);
+  composer.addPass(bloomPass);
+  composer.addPass(outputPass);
 };
 </script>
 <style></style>
