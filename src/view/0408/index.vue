@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-08 09:15:55
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 10:34:45
+ * @LastEditTime: 2025-04-08 10:43:59
  * @Description: 请填写简介
 -->
 <template>
@@ -179,12 +179,12 @@ const createFire = async () => {
       stylizeThreshold: { value: 0.5 },
       grayscale: { type: "b", value: false },
       details: { value: 0.5 },
-      side: THREE.DoubleSide,
-      transparent: false,
-      blending: THREE.AdditiveBlending,
-      vertexShader: vertexFireShader,
-      fragmentShader: fragmentFireShader,
     },
+    side: THREE.DoubleSide,
+    transparent: false,
+    blending: THREE.AdditiveBlending,
+    vertexShader: vertexFireShader,
+    fragmentShader: fragmentFireShader,
   });
   const fireGeom = new THREE.CylinderGeometry(
     0.03,
