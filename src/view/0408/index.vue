@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-08 09:15:55
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 09:45:05
+ * @LastEditTime: 2025-04-08 09:50:45
  * @Description: 请填写简介
 -->
 <template>
@@ -14,8 +14,11 @@ import * as THREE from "three";
 // 导入Controls库
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 // 导入着色器
-import vertexFireShader from "../../shader/0407/vert.glsl?raw"; // 顶点着色器
-import fragmentFireShader from "../../shader/0407/frag.glsl?raw"; // 片元着色器
+import vertexModelShader from "../../shader/0407/vert.glsl?raw"; // 顶点着色器
+import fragmentModelShader from "../../shader/0407/frag.glsl?raw"; // 片元着色器
+import vertexFireShader from "../../shader/0407/fire/vertFire.glsl?raw"; // 顶点着色器
+import fragmentFireShader from "../../shader/0407/fire/fragFire.glsl?raw"; // 片元着色器
+
 // 导入glb-loader
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 // 导入draco解码器
@@ -45,6 +48,9 @@ const init = async () => {
   // 创建场景并设置背景色
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
+  // 添加辅助坐标轴
+  const axesHelper = new THREE.AxesHelper(5);
+  scene.add(axesHelper);
 
   // 创建透视相机
   camera = new THREE.PerspectiveCamera(
@@ -72,8 +78,8 @@ const init = async () => {
   fireUniforms.map.value.fireplaceMap = fireplace.material.map;
   const fireplaceMat = new THREE.ShaderMaterial({
     uniforms: fireUniforms,
-    vertexShader: vertexFireShader,
-    fragmentShader: fragmentFireShader,
+    vertexShader: vertexModelShader,
+    fragmentShader: fragmentModelShader,
   });
   fireplace.material = fireplaceMat;
 
@@ -83,6 +89,7 @@ const init = async () => {
   const floorMat = fireplaceMat.clone();
   floorMat.uniforms.map.value = floorMap;
   floor.material = floorMat;
+  console.log(fireplace, floor);
 
   scene.add(fireplace);
   scene.add(floor);
@@ -111,6 +118,25 @@ const loadTexture = () => {
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
       resolve(texture);
     });
+  });
+};
+const createFire = () => {
+  const fireMat = new THREE.ShaderMaterial({
+    uniforms: {
+      noiseMap: { value: this.noiseTexture },
+      time: { value: 0 },
+      opacity: { value: 1 },
+      intensity: { value: 1 },
+      stylizeRatio: { value: 0.5 },
+      stylizeThreshold: { value: 0.5 },
+      grayscale: { type: "b", value: false },
+      details: { value: 0.5 },
+      side: THREE.DoubleSide,
+      transparent: false,
+      blending: THREE.AdditiveBlending,
+      vertexShader: fireVert,
+      fragmentShader: fireFrag,
+    },
   });
 };
 </script>
