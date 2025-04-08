@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-08 09:15:55
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 09:56:50
+ * @LastEditTime: 2025-04-08 10:00:29
  * @Description: 请填写简介
 -->
 <template>
@@ -18,6 +18,7 @@ import vertexModelShader from "../../shader/0408/vert.glsl?raw"; // 顶点着色
 import fragmentModelShader from "../../shader/0408/frag.glsl?raw"; // 片元着色器
 import vertexFireShader from "../../shader/0408/vertFire.glsl?raw"; // 顶点着色器
 import fragmentFireShader from "../../shader/0408/fragFire.glsl?raw"; // 片元着色器
+import fragmentAshesShader from "../../shader/0408/fragAshes.glsl?raw"; // 片元着色器
 
 // 导入glb-loader
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -154,6 +155,20 @@ const createFire = async () => {
   fire.position.set(0.1, -0.1, 0);
   fire.rotation.y = -Math.PI / 2;
   return fire;
+};
+const createAshes = async () => {
+  const ashesMat = new THREE.ShaderMaterial({
+    uniforms: {
+      noiseMap: { value: await loadTexture() },
+      intensity: { value: 1 },
+      time: { value: 0 },
+    },
+    side: THREE.DoubleSide,
+    transparent: false,
+    blending: THREE.MultiplyBlending,
+    vertexShader: vertexFireShader,
+    fragmentShader: fragmentAshesShader,
+  });
 };
 </script>
 <style></style>
