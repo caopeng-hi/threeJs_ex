@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-08 09:15:55
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 09:50:45
+ * @LastEditTime: 2025-04-08 09:56:50
  * @Description: 请填写简介
 -->
 <template>
@@ -14,10 +14,10 @@ import * as THREE from "three";
 // 导入Controls库
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 // 导入着色器
-import vertexModelShader from "../../shader/0407/vert.glsl?raw"; // 顶点着色器
-import fragmentModelShader from "../../shader/0407/frag.glsl?raw"; // 片元着色器
-import vertexFireShader from "../../shader/0407/fire/vertFire.glsl?raw"; // 顶点着色器
-import fragmentFireShader from "../../shader/0407/fire/fragFire.glsl?raw"; // 片元着色器
+import vertexModelShader from "../../shader/0408/vert.glsl?raw"; // 顶点着色器
+import fragmentModelShader from "../../shader/0408/frag.glsl?raw"; // 片元着色器
+import vertexFireShader from "../../shader/0408/vertFire.glsl?raw"; // 顶点着色器
+import fragmentFireShader from "../../shader/0408/fragFire.glsl?raw"; // 片元着色器
 
 // 导入glb-loader
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -89,10 +89,11 @@ const init = async () => {
   const floorMat = fireplaceMat.clone();
   floorMat.uniforms.map.value = floorMap;
   floor.material = floorMat;
-  console.log(fireplace, floor);
 
   scene.add(fireplace);
   scene.add(floor);
+  const fire = await createFire(); // 创建火焰
+  fireplace.add(fire); // 将火焰添加到火盆中
 };
 const animate = () => {
   requestAnimationFrame(animate);
@@ -120,10 +121,10 @@ const loadTexture = () => {
     });
   });
 };
-const createFire = () => {
+const createFire = async () => {
   const fireMat = new THREE.ShaderMaterial({
     uniforms: {
-      noiseMap: { value: this.noiseTexture },
+      noiseMap: { value: await loadTexture() },
       time: { value: 0 },
       opacity: { value: 1 },
       intensity: { value: 1 },
@@ -134,10 +135,25 @@ const createFire = () => {
       side: THREE.DoubleSide,
       transparent: false,
       blending: THREE.AdditiveBlending,
-      vertexShader: fireVert,
-      fragmentShader: fireFrag,
+      vertexShader: vertexFireShader,
+      fragmentShader: fragmentFireShader,
     },
   });
+  const fireGeom = new THREE.CylinderGeometry(
+    0.03,
+    0.2,
+    0.35,
+    15,
+    15,
+    true,
+    -Math.PI / 2,
+    Math.PI
+  );
+  fireGeom.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0.1, 0));
+  const fire = new THREE.Mesh(fireGeom, fireMat);
+  fire.position.set(0.1, -0.1, 0);
+  fire.rotation.y = -Math.PI / 2;
+  return fire;
 };
 </script>
 <style></style>
