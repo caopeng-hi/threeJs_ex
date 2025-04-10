@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-10 11:25:16
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-10 14:14:18
+ * @LastEditTime: 2025-04-10 14:16:12
  * @Description: 请填写简介
 -->
 <template>
@@ -54,6 +54,21 @@ const init = async () => {
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
+
+  // 1. 创建球体几何
+  const sphere = new THREE.SphereGeometry(4.5, 140, 140);
+  let meshGeo = sphere;
+
+  // 2. 创建材质
+  const phyMat = new THREE.MeshPhysicalMaterial();
+  phyMat.color = new THREE.Color(0x636363); // 初始颜色为灰色
+  phyMat.metalness = 2.0; // 金属度(可以根据需求调试)
+  phyMat.roughness = 0.0; // 粗糙度(越低越光滑)
+  phyMat.side = THREE.DoubleSide; // 双面渲染
+
+  // 3. 组合几何体和材质，生成网格
+  let mesh = new THREE.Mesh(meshGeo, phyMat);
+  scene.add(mesh);
 };
 const animate = () => {
   requestAnimationFrame(animate);
