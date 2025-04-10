@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-10 11:25:16
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-10 14:39:24
+ * @LastEditTime: 2025-04-10 14:50:49
  * @Description: 请填写简介
 -->
 <template>
@@ -29,15 +29,15 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 // 导入OutputPass
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+// 导入着色器
+import combineVertexShader from "../../shader/0410/combineVert.glsl?raw";
+import combineFragmentShader from "../../shader/0410/combineFrag.glsl?raw";
 
 let renderer,
   camera,
   controls,
   scene,
   bloomEffectComposer,
-  bloomPass,
-  outputPass,
-  baseRenderPass,
   combinedEffectComposer;
 let scale = 1.0;
 let cubeTexture;
@@ -136,32 +136,12 @@ const init = async () => {
       uniforms: {
         baseTexture: { value: null },
         bloomTexture: {
-          // 从第一个 Composer 里获取它的结果纹理
           value: bloomEffectComposer.renderTarget2.texture,
         },
         bloomStrength: { value: 8.0 },
       },
-      vertexShader: `
-      varying vec2 vUv;
-      void main(){
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-     }
-   `,
-      fragmentShader: `
-     uniform sampler2D baseTexture;
-     uniform sampler2D bloomTexture;
-     uniform float bloomStrength;
-     varying vec2 vUv;
-     void main(){
-     // 取原图
-     vec4 baseEffect = texture2D(baseTexture, vUv);
-     // 取 Bloom 生成的图
-     vec4 bloomEffect = texture2D(bloomTexture, vUv);
-     // 简单把它们做加法叠加，并乘以 bloomStrength
-     gl_FragColor = baseEffect + bloomEffect * bloomStrength;
-     }
-  `,
+      vertexShader: combineVertexShader,
+      fragmentShader: combineFragmentShader,
     })
   );
 
