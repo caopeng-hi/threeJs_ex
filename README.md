@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 11:09:42
+ * @LastEditTime: 2025-04-10 14:56:35
  * @Description: 请填写简介
 -->
 
@@ -85,3 +85,8 @@
   [壁炉火焰](https://github.com/caopeng-hi/img/blob/main/20250408_110523.gif)
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250408_110523.gif" alt="壁炉火焰">
+
+- 0410 消融的球体
+  [消融的球体](https://github.com/caopeng-hi/img/blob/main/20250410_145235.gif)
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250410_145235.gif" alt="消融的球体">
