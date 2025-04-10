@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-10 11:25:16
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-10 14:30:42
+ * @LastEditTime: 2025-04-10 14:39:24
  * @Description: 请填写简介
 -->
 <template>
@@ -19,14 +19,26 @@ import { onMounted, onUnmounted, ref } from "vue";
 import { Pane } from "tweakpane";
 // 引入公共噪声函数
 import snoise from "../../shader/common/noise.glsl?raw";
+// 导入EffectComposer
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+// 导入RenderPass
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+// 导入UnrealBloomPass
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+// 导入ShaderPass
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+// 导入OutputPass
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+
 let renderer,
   camera,
   controls,
   scene,
-  composer,
+  bloomEffectComposer,
   bloomPass,
   outputPass,
-  renderPass;
+  baseRenderPass,
+  combinedEffectComposer;
 let scale = 1.0;
 let cubeTexture;
 // 定义要在面板上调试的参数
@@ -100,11 +112,71 @@ const init = async () => {
     .on("change", (obj) => {
       dissolveUniformData.uProgress.value = obj.value;
     });
+
+  bloomEffectComposer = new EffectComposer(renderer);
+  const baseRenderPass = new RenderPass(scene, camera);
+  // UnrealBloomPass 的核心参数可根据需求做调试
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth * scale, window.innerHeight * scale),
+    0.5, // bloom 强度
+    0.25, // bloom 半径
+    0.2 // bloom 阈值
+  );
+  // 将两个 Pass 添加到第一个 Composer 中
+  bloomEffectComposer.addPass(baseRenderPass);
+  bloomEffectComposer.addPass(bloomPass);
+  bloomEffectComposer.renderToScreen = false;
+  // 第二个composer
+
+  combinedEffectComposer = new EffectComposer(renderer);
+  // 再次使用 RenderPass，这次相当于得到“基准图”
+  const combineBaseRenderPass = new RenderPass(scene, camera);
+  const combineShaderPass = new ShaderPass(
+    new THREE.ShaderMaterial({
+      uniforms: {
+        baseTexture: { value: null },
+        bloomTexture: {
+          // 从第一个 Composer 里获取它的结果纹理
+          value: bloomEffectComposer.renderTarget2.texture,
+        },
+        bloomStrength: { value: 8.0 },
+      },
+      vertexShader: `
+      varying vec2 vUv;
+      void main(){
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+     }
+   `,
+      fragmentShader: `
+     uniform sampler2D baseTexture;
+     uniform sampler2D bloomTexture;
+     uniform float bloomStrength;
+     varying vec2 vUv;
+     void main(){
+     // 取原图
+     vec4 baseEffect = texture2D(baseTexture, vUv);
+     // 取 Bloom 生成的图
+     vec4 bloomEffect = texture2D(bloomTexture, vUv);
+     // 简单把它们做加法叠加，并乘以 bloomStrength
+     gl_FragColor = baseEffect + bloomEffect * bloomStrength;
+     }
+  `,
+    })
+  );
+
+  const finalOutputPass = new OutputPass();
+  // 按序将 Pass 添加到第二个 Composer
+  combinedEffectComposer.addPass(combineBaseRenderPass);
+  combinedEffectComposer.addPass(combineShaderPass);
+  combinedEffectComposer.addPass(finalOutputPass);
 };
 const animate = () => {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
+  bloomEffectComposer.render();
+  combinedEffectComposer.render();
 };
 onMounted(() => {
   init();
