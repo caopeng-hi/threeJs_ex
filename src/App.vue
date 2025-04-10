@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-08 09:17:50
+ * @LastEditTime: 2025-04-10 11:26:35
  * @Description: 请填写简介
 -->
 <template>
@@ -26,7 +26,8 @@
 // import scene from "./view/0402/index.vue";
 // import scene from "./view/0403/index.vue";
 // import scene from "./view/0407/index.vue";
-import scene from "./view/0408/index.vue";
+// import scene from "./view/0408/index.vue";
+import scene from "./view/0410/index.vue";
 </script>
 
 <style lang="scss" scoped>
