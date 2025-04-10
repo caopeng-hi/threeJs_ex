@@ -1,3 +1,10 @@
+<!--
+ * @Author: caopeng
+ * @Date: 2025-04-10 11:25:16
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2025-04-10 14:01:40
+ * @Description: 请填写简介
+-->
 <template>
   <div class="canvasRef" ref="canvasRef"></div>
 </template>
@@ -16,11 +23,22 @@ let renderer,
   bloomPass,
   outputPass,
   renderPass;
+let scale = 1.0;
+let cubeTexture;
 const canvasRef = ref(null);
 const init = async () => {
   // 创建场景并设置背景色
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
+
+  let cubeTexturePaths = generateCubeUrls("../../assets/img/", ".png");
+
+  // 异步加载立方体贴图
+  const cubeTextureLoader = new THREE.CubeTextureLoader();
+  cubeTexture = await cubeTextureLoader.loadAsync(cubeTexturePaths);
+
+  scene.background = cubeTexture;
+  scene.environment = cubeTexture;
   // 创建相机
   camera = new THREE.PerspectiveCamera(
     75,
@@ -28,7 +46,7 @@ const init = async () => {
     0.1,
     1000
   );
-  camera.position.set(0, 0, 5);
+  camera.position.set(0, 1, 14); // 适当拉远一点，能看到球体全貌
   // 创建渲染器
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -47,10 +65,16 @@ onMounted(() => {
   init();
   animate();
 });
-onUnmounted(() => {
-  renderer.dispose();
-  controls.dispose();
-  scene.dispose();
-});
+// 定义一个函数，用来生成六张立方体纹理的路径
+function generateCubeUrls(prefix, postfix) {
+  return [
+    prefix + "posx" + postfix,
+    prefix + "negx" + postfix,
+    prefix + "posy" + postfix,
+    prefix + "negy" + postfix,
+    prefix + "posz" + postfix,
+    prefix + "negz" + postfix,
+  ];
+}
 </script>
 <style scoped></style>
