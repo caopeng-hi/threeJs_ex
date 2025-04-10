@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-10 11:25:16
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-10 14:01:40
+ * @LastEditTime: 2025-04-10 14:14:18
  * @Description: 请填写简介
 -->
 <template>
@@ -29,13 +29,12 @@ const canvasRef = ref(null);
 const init = async () => {
   // 创建场景并设置背景色
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000);
 
-  let cubeTexturePaths = generateCubeUrls("../../assets/img/", ".png");
+  let cubeTexturePaths = generateCubeUrls("./img/", ".png");
 
   // 异步加载立方体贴图
   const cubeTextureLoader = new THREE.CubeTextureLoader();
-  cubeTexture = await cubeTextureLoader.loadAsync(cubeTexturePaths);
+  cubeTexture = cubeTextureLoader.load(cubeTexturePaths);
 
   scene.background = cubeTexture;
   scene.environment = cubeTexture;
