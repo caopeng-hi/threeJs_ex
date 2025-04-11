@@ -1,4 +1,4 @@
-  precision highp float;
+precision highp float;
   uniform vec2 uPointer;
   uniform float uProgress;
   uniform sampler2D tDepthMap;
@@ -11,12 +11,13 @@
 
   // 交叉形状的距离场函数（SDF）
   float sdCross(vec2 p, vec2 size, float angle) {
-    p = abs(p);
-    if (p.x > p.y) p = p.yx;
-    vec2 q = p - size;
-    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
-  }
-
+    p = abs(p);  // 使形状对称
+    // 计算水平和垂直臂的距离场
+    float d1 = length(max(p - vec2(size.x, 0.0), 0.0));
+    float d2 = length(max(p - vec2(0.0, size.y), 0.0));
+    // 取最小值得到交叉形状
+    return min(d1, d2);
+}
 
     vec3 blendScreen(vec3 a, vec3 b) {
     return 1.0 - (1.0 - a) * (1.0 - b);
@@ -30,11 +31,11 @@
     vec3 tMapColor = texture2D(tMap, uv + offset).rgb * 0.8;
 
     // 2. 生成交叉图案
-    vec2 tUv = vec2(uv.x * uAspect, uv.y);
-    vec2 tiling = vec2(50.0);
-    vec2 tiledUv = mod(tUv * tiling, 2.0) - 1.0;
-    float dist = sdCross(tiledUv, vec2(0.3, 0.02), 0.0);
-    vec3 cross = vec3(smoothstep(0.0, 0.02, dist));
+    vec2 tUv = vec2(uv.x * uAspect, uv.y);  // 1. 调整UV坐标以保持宽高比
+    vec2 tiling = vec2(50.0);               // 2. 设置平铺密度(50x50)
+    vec2 tiledUv = mod(tUv * tiling, 2.0) - 1.0; // 3. 创建平铺UV坐标(-1到1范围)
+    float dist = sdCross(tiledUv, vec2(0.3, 0.3), 0.0); // 4. 计算交叉形状距离场
+    vec3 cross = vec3(smoothstep(0.0, 0.02, dist)); // 5. 生成平滑的交叉图案
 
     // 3. 深度遮罩
     float invertedDepth = 1.0 - depth;
