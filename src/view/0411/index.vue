@@ -3,11 +3,14 @@
 </template>
 <script setup>
 // 导入Three.js核心库和Vue组合式API
-import * as THREE from "three/webgpu";
+import * as THREE from "three";
 // 导入Controls库
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 // 导入Vue组合式API
 import { onMounted, onUnmounted, ref } from "vue";
+// 导入着色器
+import vertexShader from "../../shader/0411/vert.glsl?raw";
+import fragmentShader from "../../shader/0411/frag.glsl?raw";
 
 // 创建一个ref来引用canvas元素
 const canvasRef = ref(null);
@@ -40,7 +43,7 @@ const init = () => {
   // 设置相机位置
   camera.position.set(0, 0, 10);
   // 创建一个渲染器，设置其背景色为白色
-  renderer = new THREE.WebGPURenderer({ antialias: true });
+  renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setClearColor(0xffffff, 1.0); // 设置背景色为白色
@@ -64,14 +67,16 @@ const init = () => {
     vertexShader,
     fragmentShader,
   });
+  // 创建覆盖整个NDC空间的几何体 (-1到1)
   const geometry = new THREE.PlaneGeometry(2, 2);
+
   const mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
 };
-const animate = async () => {
+const animate = () => {
   requestAnimationFrame(animate);
   // 渲染场景
-  await renderer.renderAsync(scene, camera);
+  renderer.render(scene, camera);
   // 更新控制器
   controls.update();
 };
