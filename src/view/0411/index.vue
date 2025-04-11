@@ -35,7 +35,7 @@ onMounted(() => {
 
 const init = () => {
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000);
+  scene.background = new THREE.Color(0xffffff);
   camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
@@ -51,25 +51,24 @@ const init = () => {
   renderer.setClearColor(0xffffff, 1.0); // 设置背景色为白色
   // 将渲染器的输出添加到页面上
   canvasRef.value.appendChild(renderer.domElement);
-  // 创建一个控制器，用于控制相机的旋转、缩放和平移
   controls = new OrbitControls(camera, renderer.domElement);
 
-  // 加载平面贴图
   const textureLoader = new THREE.TextureLoader();
   const texture = textureLoader.load("/texture/raw-3.jpg");
-  texture.colorSpace = THREE.SRGBColorSpace; // 设置纹理颜色空间为sRGB
-  // 加载深度贴图
+  texture.colorSpace = THREE.SRGBColorSpace;
+
   const depthMap = textureLoader.load("/texture/depth-3.png");
 
-  uniforms.tMap.value = texture; // 将纹理赋值给uniforms
-  uniforms.tDepthMap.value = depthMap; // 将深度贴图赋值给uniforms
+  uniforms.tMap.value = texture;
+  uniforms.tDepthMap.value = depthMap;
 
   material = new THREE.ShaderMaterial({
     uniforms,
     vertexShader,
     fragmentShader,
+    emissive: 0x888888, // 增加自发光效果
+    emissiveIntensity: 0.5, // 发光强度
   });
-  // 创建覆盖整个NDC空间的几何体 (-1到1)
   const geometry = new THREE.PlaneGeometry(2, 2);
 
   const mesh = new THREE.Mesh(geometry, material);

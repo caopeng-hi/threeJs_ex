@@ -27,7 +27,7 @@
     // 1. 主纹理 + 深度图偏移
     float depth = texture2D(tDepthMap, uv).r;
     vec2 offset = uPointer * depth * uStrength;
-    vec3 tMapColor = texture2D(tMap, uv + offset).rgb * 0.5;
+    vec3 tMapColor = texture2D(tMap, uv + offset).rgb * 0.8;
 
     // 2. 生成交叉图案
     vec2 tUv = vec2(uv.x * uAspect, uv.y);
