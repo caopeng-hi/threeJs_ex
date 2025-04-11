@@ -66,8 +66,6 @@ const init = () => {
     uniforms,
     vertexShader,
     fragmentShader,
-    emissive: 0x888888, // 增加自发光效果
-    emissiveIntensity: 0.5, // 发光强度
   });
   const geometry = new THREE.PlaneGeometry(2, 2);
 
@@ -76,11 +74,11 @@ const init = () => {
 };
 const animate = () => {
   requestAnimationFrame(animate);
-  // 渲染场景
   renderer.render(scene, camera);
-  // 更新控制器
   controls.update();
-  material.uniforms.uProgress.value += 0.01;
+
+  // 使用sin函数实现平滑循环
+  material.uniforms.uProgress.value = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
 };
 const onMouseMove = (e) => {
   material.uniforms.uPointer.value.set(
