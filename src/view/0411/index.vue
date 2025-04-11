@@ -1,3 +1,10 @@
+<!--
+ * @Author: caopeng
+ * @Date: 2025-04-11 14:56:11
+ * @LastEditors: 
+ * @LastEditTime: 2025-04-11 15:01:26
+ * @Description: 请填写简介
+-->
 <template>
   <div class="canvasRef" ref="canvasRef"></div>
 </template>
@@ -78,7 +85,8 @@ const animate = () => {
   controls.update();
 
   // 使用sin函数实现平滑循环
-  material.uniforms.uProgress.value = Math.sin(Date.now() * 0.001) * 0.5 + 0.5;
+  material.uniforms.uProgress.value =
+    (material.uniforms.uProgress.value += 0.01) % 1;
 };
 const onMouseMove = (e) => {
   material.uniforms.uPointer.value.set(

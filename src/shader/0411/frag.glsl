@@ -12,7 +12,6 @@ precision highp float;
 float sdCross(vec2 p, vec2 b, float r) {
     p = abs(p);
     
-    // Swap components if y > x
     if(p.y > p.x) {
         p = p.yx;
     } else {
