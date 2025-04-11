@@ -14,7 +14,7 @@ import fragmentShader from "../../shader/0411/frag.glsl?raw";
 
 // 创建一个ref来引用canvas元素
 const canvasRef = ref(null);
-let renderer, camera, controls, scene;
+let renderer, camera, controls, scene, material;
 const uniforms = {
   uPointer: { value: new THREE.Vector2(0, 0) },
   uProgress: { value: 0 },
@@ -29,6 +29,8 @@ const uniforms = {
 onMounted(() => {
   init();
   animate();
+  // 添加鼠标移动事件监听
+  canvasRef.value.addEventListener("mousemove", onMouseMove);
 });
 
 const init = () => {
@@ -62,7 +64,7 @@ const init = () => {
   uniforms.tMap.value = texture; // 将纹理赋值给uniforms
   uniforms.tDepthMap.value = depthMap; // 将深度贴图赋值给uniforms
 
-  const material = new THREE.ShaderMaterial({
+  material = new THREE.ShaderMaterial({
     uniforms,
     vertexShader,
     fragmentShader,
@@ -79,6 +81,13 @@ const animate = () => {
   renderer.render(scene, camera);
   // 更新控制器
   controls.update();
+  material.uniforms.uProgress.value += 0.01;
+};
+const onMouseMove = (e) => {
+  material.uniforms.uPointer.value.set(
+    (e.clientX / window.innerWidth) * 2 - 1,
+    -(e.clientY / window.innerHeight) * 2 + 1
+  );
 };
 </script>
 <style scoped></style>
