@@ -9,14 +9,28 @@ precision highp float;
 
   varying vec2 vUv;
 
-  // 交叉形状的距离场函数（SDF）
-  float sdCross(vec2 p, vec2 size, float angle) {
-    p = abs(p);  // 使形状对称
-    // 计算水平和垂直臂的距离场
-    float d1 = length(max(p - vec2(size.x, 0.0), 0.0));
-    float d2 = length(max(p - vec2(0.0, size.y), 0.0));
-    // 取最小值得到交叉形状
-    return min(d1, d2);
+float sdCross(vec2 p, vec2 b, float r) {
+    p = abs(p);
+    
+    // Swap components if y > x
+    if(p.y > p.x) {
+        p = p.yx;
+    } else {
+        p = p.xy;
+    }
+    
+    vec2 q = p - b;
+    float k = max(q.y, q.x);
+    vec2 w;
+    
+    if(k > 0.0) {
+        w = q;
+    } else {
+        w = vec2(b.y - p.x, -k);
+    }
+    
+    float d = length(max(w, 0.0));
+    return (k > 0.0) ? d : -d + r;
 }
 
     vec3 blendScreen(vec3 a, vec3 b) {
