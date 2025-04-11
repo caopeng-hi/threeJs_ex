@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-10 14:56:35
+ * @LastEditTime: 2025-04-11 15:10:25
  * @Description: 请填写简介
 -->
 
@@ -90,3 +90,8 @@
   [消融的球体](https://github.com/caopeng-hi/img/blob/main/20250410_145235.gif)
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250410_145235.gif" alt="消融的球体">
+
+- 0411 动画扫描
+  [动画扫描](https://github.com/caopeng-hi/img/blob/main/20250411_150727.gif)
+
+  <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250411_150727.gif" alt="动画扫描">
