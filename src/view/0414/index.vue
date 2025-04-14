@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-14 10:57:51
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-14 11:16:40
+ * @LastEditTime: 2025-04-14 11:27:39
  * @Description: 请填写简介
 -->
 <template>
@@ -19,7 +19,20 @@ let scene = null; // 定义场景
 let camera = null; // 定义相机
 let renderer = null; // 定义渲染器
 let controls = null; // 定义控制器
-let cube = null; // 定义立方体
+let timeUniform = { value: 0 };
+let ripples = [];
+let order = 0;
+let drops = [];
+let colorScene;
+let normalTarget = new THREE.WebGLRenderTarget(
+  window.innerWidth,
+  window.innerHeight
+);
+let ball;
+let i = 0;
+let squareGeometry;
+let minusMaterial;
+let plusMaterial;
 onMounted(() => {
   init();
   animate();
@@ -50,9 +63,9 @@ const init = () => {
   controls.screenSpacePanning = true; // 开启屏幕空间平移
 
   // 创建一个平面
-  let squareGeometry = new THREE.PlaneGeometry(10, 10);
+  squareGeometry = new THREE.PlaneGeometry(10, 10);
   let gray50 = new THREE.Color(0.5, 0.5, 0.5);
-  let minusMaterial = new THREE.MeshBasicMaterial({
+  minusMaterial = new THREE.MeshBasicMaterial({
     color: gray50,
     blending: THREE.CustomBlending, // 设置混合模式
     blendEquation: THREE.ReverseSubtractEquation, // 设置混合方程
@@ -66,7 +79,7 @@ const init = () => {
   });
   let textureLoader = new THREE.TextureLoader();
   let texture = textureLoader.load("/texture/ripple.png");
-  let plusMaterial = new THREE.MeshBasicMaterial({
+  plusMaterial = new THREE.MeshBasicMaterial({
     map: texture, // 设置纹理贴图
     blending: THREE.CustomBlending, // 设置混合模式
     blendEquation: THREE.AddEquation, // 设置混合方程
@@ -77,48 +90,14 @@ const init = () => {
     transparent: true, // 开启透明度
     side: THREE.DoubleSide, // 设置双面
   });
-  let ripples = [];
-  let order = 0;
 
-  function makeRipple(x, y, strength) {
-    let minusSquare = new THREE.Mesh(squareGeometry, minusMaterial.clone());
-    scene.add(minusSquare);
-    minusSquare.renderOrder = order++;
-    minusSquare.position.set(x, y, 0);
-    minusSquare.scale.set(0.1, 0.1, 1);
-    minusSquare.material.opacity = strength;
-
-    let plusSquare = new THREE.Mesh(squareGeometry, plusMaterial.clone());
-    scene.add(plusSquare);
-    plusSquare.renderOrder = order++;
-    plusSquare.position.set(x, y, 0);
-    plusSquare.scale.set(0.1, 0.1, 1);
-    plusSquare.material.opacity = strength;
-
-    ripples.push({ minus: minusSquare, plus: plusSquare });
-  }
-  function updateRipples(dt) {
-    for (let ripple of ripples) {
-      ripple.minus.scale.x += dt;
-      ripple.minus.scale.y += dt;
-      ripple.minus.material.opacity -= dt / 6;
-      ripple.plus.scale.x += dt;
-      ripple.plus.scale.y += dt;
-      ripple.plus.material.opacity -= dt / 6;
-      if (ripple.minus.material.opacity <= 0) {
-        scene.remove(ripple.minus);
-        scene.remove(ripple.plus);
-        ripples.splice(ripples.indexOf(ripple), 1);
-      }
-    }
-  }
-  let normalTarget = new THREE.WebGLRenderTarget(
+  normalTarget = new THREE.WebGLRenderTarget(
     window.innerWidth,
     window.innerHeight
   );
   normalTarget.texture.colorSpace = THREE.NoColorSpace;
   let normalTextureUniform = { value: normalTarget.texture };
-  let colorScene = new THREE.Scene();
+  colorScene = new THREE.Scene();
   THREE.ColorManagement.enabled = true;
   const pmremGenerator = new THREE.PMREMGenerator(renderer);
   pmremGenerator.compileCubemapShader();
@@ -159,7 +138,6 @@ const init = () => {
   waterMaterial.normalMap.wrapT = THREE.RepeatWrapping;
   waterMaterial.normalMap.repeat.set(10, 10);
 
-  let timeUniform = { value: 0 };
   let resolutionUniform = {
     value: new THREE.Vector2(window.innerWidth, window.innerHeight),
   };
@@ -203,17 +181,90 @@ const init = () => {
   let waterPlane = new THREE.Mesh(waterGeometry, waterMaterial);
   colorScene.add(waterPlane);
 
-  let ball = new THREE.Mesh(
+  ball = new THREE.Mesh(
     new THREE.SphereGeometry(0.1, 16, 16),
     new THREE.MeshStandardMaterial({ roughness: 0, metalness: 1 })
   );
   colorScene.add(ball);
+
+  function makeDrop(x, y, z) {
+    let drop = new THREE.Mesh(
+      new THREE.SphereGeometry(0.1, 16, 16),
+      new THREE.MeshStandardMaterial({ roughness: 0, metalness: 1 })
+    );
+    drop.position.set(x, y, z);
+    drop.userData.vz = 0;
+    colorScene.add(drop);
+    drops.push(drop);
+  }
 };
 const animate = () => {
+  let t = performance.now() / 1000;
+  let dt = t - timeUniform.value;
+  timeUniform.value = t;
   requestAnimationFrame(animate);
+  let x = Math.sin(Math.sqrt(5) * timeUniform.value) * 5;
+  let y = Math.cos(timeUniform.value) * 5;
+  let vx = Math.sqrt(5) * Math.cos(Math.sqrt(5) * timeUniform.value) * 5;
+  let vy = Math.sin(timeUniform.value) * 5;
+  ball.position.set(x, y, 0);
+
+  if (i++ % 3 == 0) {
+    makeRipple(x, y, (vx ** 2 + vy ** 2) ** 0.5 / 30);
+  }
+  if (i % 10 == 1) {
+    makeDrop(Math.random() * 30 - 15, Math.random() * 30 - 15, 20);
+  }
+  updateRipples(dt);
+  updateDrops(dt);
   // 渲染场景和相机
+  renderer.setRenderTarget(normalTarget);
   renderer.render(scene, camera);
+  renderer.render(colorScene, camera);
   controls.update();
 };
+function updateDrops(dt) {
+  for (let drop of drops) {
+    drop.position.z += drop.userData.vz * dt;
+    drop.userData.vz -= 9.81 * dt;
+    if (drop.position.z < 0) {
+      colorScene.remove(drop);
+      drops.splice(drops.indexOf(drop), 1);
+      makeRipple(drop.position.x, drop.position.y, 0.5);
+    }
+  }
+}
+function updateRipples(dt) {
+  for (let ripple of ripples) {
+    ripple.minus.scale.x += dt;
+    ripple.minus.scale.y += dt;
+    ripple.minus.material.opacity -= dt / 6;
+    ripple.plus.scale.x += dt;
+    ripple.plus.scale.y += dt;
+    ripple.plus.material.opacity -= dt / 6;
+    if (ripple.minus.material.opacity <= 0) {
+      scene.remove(ripple.minus);
+      scene.remove(ripple.plus);
+      ripples.splice(ripples.indexOf(ripple), 1);
+    }
+  }
+}
+function makeRipple(x, y, strength) {
+  let minusSquare = new THREE.Mesh(squareGeometry, minusMaterial.clone());
+  scene.add(minusSquare);
+  minusSquare.renderOrder = order++;
+  minusSquare.position.set(x, y, 0);
+  minusSquare.scale.set(0.1, 0.1, 1);
+  minusSquare.material.opacity = strength;
+
+  let plusSquare = new THREE.Mesh(squareGeometry, plusMaterial.clone());
+  scene.add(plusSquare);
+  plusSquare.renderOrder = order++;
+  plusSquare.position.set(x, y, 0);
+  plusSquare.scale.set(0.1, 0.1, 1);
+  plusSquare.material.opacity = strength;
+
+  ripples.push({ minus: minusSquare, plus: plusSquare });
+}
 </script>
 <style scoped></style>
