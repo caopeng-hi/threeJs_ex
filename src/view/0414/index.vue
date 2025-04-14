@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-14 10:57:51
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-14 12:51:39
+ * @LastEditTime: 2025-04-14 14:52:12
  * @Description: 请填写简介
 -->
 <template>
@@ -15,10 +15,10 @@ import * as THREE from "three";
 // 导入Controls库
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 let canvasRef = ref(null); // 定义一个ref引用，用于获取canvas元素
-let scene = null; // 定义场景
-let camera = null; // 定义相机
-let renderer = null; // 定义渲染器
-let controls = null; // 定义控制器
+let scene; // 定义场景
+let camera; // 定义相机
+let renderer; // 定义渲染器
+let controls; // 定义控制器
 let timeUniform = { value: 0 };
 let ripples = [];
 let order = 0;
@@ -42,18 +42,11 @@ const init = () => {
   scene = new THREE.Scene();
   const bgColor = new THREE.Color(0.5, 0.5, 0.5); // 设置背景颜色
   scene.background = bgColor;
-  // 添加辅助坐标轴
-  const axesHelper = new THREE.AxesHelper(15); // 创建一个长度为15的坐标轴
-  scene.add(axesHelper); // 将坐标轴添加到场景中
+
   // 创建相机
-  camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
-  // 设置相机位置
+  camera = new THREE.PerspectiveCamera(60, 1.0, 0.1, 1000);
   camera.position.set(15, 0, 15);
+  camera.up.set(0, 0, 1);
   // 创建渲染器
   renderer = new THREE.WebGLRenderer();
   // 设置渲染器大小
@@ -208,8 +201,9 @@ const animate = () => {
   updateDrops(dt);
 
   // 渲染场景和相机
-  // renderer.setRenderTarget(normalTarget);
+  renderer.setRenderTarget(normalTarget);
   renderer.render(scene, camera);
+  renderer.setRenderTarget(null);
   renderer.render(colorScene, camera);
   controls.update();
 };
