@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-14 10:57:51
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-14 11:27:39
+ * @LastEditTime: 2025-04-14 12:51:39
  * @Description: 请填写简介
 -->
 <template>
@@ -42,6 +42,9 @@ const init = () => {
   scene = new THREE.Scene();
   const bgColor = new THREE.Color(0.5, 0.5, 0.5); // 设置背景颜色
   scene.background = bgColor;
+  // 添加辅助坐标轴
+  const axesHelper = new THREE.AxesHelper(15); // 创建一个长度为15的坐标轴
+  scene.add(axesHelper); // 将坐标轴添加到场景中
   // 创建相机
   camera = new THREE.PerspectiveCamera(
     75,
@@ -51,7 +54,6 @@ const init = () => {
   );
   // 设置相机位置
   camera.position.set(15, 0, 15);
-  camera.up.set(0, 0, 1);
   // 创建渲染器
   renderer = new THREE.WebGLRenderer();
   // 设置渲染器大小
@@ -60,7 +62,6 @@ const init = () => {
   canvasRef.value.appendChild(renderer.domElement);
   // 创建控制器
   controls = new OrbitControls(camera, renderer.domElement);
-  controls.screenSpacePanning = true; // 开启屏幕空间平移
 
   // 创建一个平面
   squareGeometry = new THREE.PlaneGeometry(10, 10);
@@ -141,8 +142,7 @@ const init = () => {
   let resolutionUniform = {
     value: new THREE.Vector2(window.innerWidth, window.innerHeight),
   };
-  waterMaterial.onBeforeCompile = (shader, renderer) => {
-    console.log(shader);
+  waterMaterial.onBeforeCompile = (shader) => {
     shader.uniforms.time = timeUniform;
     shader.uniforms.resolution = resolutionUniform;
     shader.uniforms.normalDisturbance = normalTextureUniform;
@@ -150,13 +150,13 @@ const init = () => {
     let chunk = "";
     for (let dir = 0.1; dir < 2 * Math.PI; dir += (2 * Math.PI) / 3) {
       chunk += `{
-					mat2 rot2d = mat2(${Math.cos(dir)}, ${-Math.sin(dir)}, ${Math.sin(
+  				mat2 rot2d = mat2(${Math.cos(dir)}, ${-Math.sin(dir)}, ${Math.sin(
         dir
       )}, ${Math.cos(dir)});
-					vec3 subNormal = texture2D( normalMap, rot2d * vNormalMapUv + vec2(time*0.03, ${dir}) ).rgb * 2.0 - 1.0;
-					subNormal.xy = rot2d * subNormal.xy;
-					normal += subNormal;
-				}`;
+  				vec3 subNormal = texture2D( normalMap, rot2d * vNormalMapUv + vec2(time*0.03, ${dir}) ).rgb * 2.0 - 1.0;
+  				subNormal.xy = rot2d * subNormal.xy;
+  				normal += subNormal;
+  			}`;
     }
     shader.fragmentShader =
       "uniform float time;\n" +
@@ -166,16 +166,16 @@ const init = () => {
         "\t#include <normal_fragment_maps>",
         chunk +
           `
-					vec3 ripple = texture2D( normalDisturbance, gl_FragCoord.xy / resolution ).rgb * 2.0 - 1.0;
-					normal += 3.0 * ripple;
-					#ifdef FLIP_SIDED
-						normal = - normal;
-					#endif
-					#ifdef DOUBLE_SIDED
-						normal = normal * faceDirection;
-					#endif
-					normal = normalize( normalMatrix * normal );
-					`
+  				vec3 ripple = texture2D( normalDisturbance, gl_FragCoord.xy / resolution ).rgb * 2.0 - 1.0;
+  				normal += 3.0 * ripple;
+  				#ifdef FLIP_SIDED
+  					normal = - normal;
+  				#endif
+  				#ifdef DOUBLE_SIDED
+  					normal = normal * faceDirection;
+  				#endif
+  				normal = normalize( normalMatrix * normal );
+  				`
       );
   };
   let waterPlane = new THREE.Mesh(waterGeometry, waterMaterial);
@@ -186,17 +186,6 @@ const init = () => {
     new THREE.MeshStandardMaterial({ roughness: 0, metalness: 1 })
   );
   colorScene.add(ball);
-
-  function makeDrop(x, y, z) {
-    let drop = new THREE.Mesh(
-      new THREE.SphereGeometry(0.1, 16, 16),
-      new THREE.MeshStandardMaterial({ roughness: 0, metalness: 1 })
-    );
-    drop.position.set(x, y, z);
-    drop.userData.vz = 0;
-    colorScene.add(drop);
-    drops.push(drop);
-  }
 };
 const animate = () => {
   let t = performance.now() / 1000;
@@ -217,8 +206,9 @@ const animate = () => {
   }
   updateRipples(dt);
   updateDrops(dt);
+
   // 渲染场景和相机
-  renderer.setRenderTarget(normalTarget);
+  // renderer.setRenderTarget(normalTarget);
   renderer.render(scene, camera);
   renderer.render(colorScene, camera);
   controls.update();
@@ -263,8 +253,17 @@ function makeRipple(x, y, strength) {
   plusSquare.position.set(x, y, 0);
   plusSquare.scale.set(0.1, 0.1, 1);
   plusSquare.material.opacity = strength;
-
   ripples.push({ minus: minusSquare, plus: plusSquare });
+}
+function makeDrop(x, y, z) {
+  let drop = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1, 16, 16),
+    new THREE.MeshStandardMaterial({ roughness: 0, metalness: 1 })
+  );
+  drop.position.set(x, y, z);
+  drop.userData.vz = 0;
+  colorScene.add(drop);
+  drops.push(drop);
 }
 </script>
 <style scoped></style>
