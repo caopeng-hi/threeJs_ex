@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-14 10:57:51
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-14 11:15:38
+ * @LastEditTime: 2025-04-14 11:16:40
  * @Description: 请填写简介
 -->
 <template>
@@ -200,6 +200,14 @@ const init = () => {
 					`
       );
   };
+  let waterPlane = new THREE.Mesh(waterGeometry, waterMaterial);
+  colorScene.add(waterPlane);
+
+  let ball = new THREE.Mesh(
+    new THREE.SphereGeometry(0.1, 16, 16),
+    new THREE.MeshStandardMaterial({ roughness: 0, metalness: 1 })
+  );
+  colorScene.add(ball);
 };
 const animate = () => {
   requestAnimationFrame(animate);
