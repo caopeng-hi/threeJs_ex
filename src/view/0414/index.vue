@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-04-14 10:57:51
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-14 11:04:03
+ * @LastEditTime: 2025-04-14 11:15:38
  * @Description: 请填写简介
 -->
 <template>
@@ -79,6 +79,127 @@ const init = () => {
   });
   let ripples = [];
   let order = 0;
+
+  function makeRipple(x, y, strength) {
+    let minusSquare = new THREE.Mesh(squareGeometry, minusMaterial.clone());
+    scene.add(minusSquare);
+    minusSquare.renderOrder = order++;
+    minusSquare.position.set(x, y, 0);
+    minusSquare.scale.set(0.1, 0.1, 1);
+    minusSquare.material.opacity = strength;
+
+    let plusSquare = new THREE.Mesh(squareGeometry, plusMaterial.clone());
+    scene.add(plusSquare);
+    plusSquare.renderOrder = order++;
+    plusSquare.position.set(x, y, 0);
+    plusSquare.scale.set(0.1, 0.1, 1);
+    plusSquare.material.opacity = strength;
+
+    ripples.push({ minus: minusSquare, plus: plusSquare });
+  }
+  function updateRipples(dt) {
+    for (let ripple of ripples) {
+      ripple.minus.scale.x += dt;
+      ripple.minus.scale.y += dt;
+      ripple.minus.material.opacity -= dt / 6;
+      ripple.plus.scale.x += dt;
+      ripple.plus.scale.y += dt;
+      ripple.plus.material.opacity -= dt / 6;
+      if (ripple.minus.material.opacity <= 0) {
+        scene.remove(ripple.minus);
+        scene.remove(ripple.plus);
+        ripples.splice(ripples.indexOf(ripple), 1);
+      }
+    }
+  }
+  let normalTarget = new THREE.WebGLRenderTarget(
+    window.innerWidth,
+    window.innerHeight
+  );
+  normalTarget.texture.colorSpace = THREE.NoColorSpace;
+  let normalTextureUniform = { value: normalTarget.texture };
+  let colorScene = new THREE.Scene();
+  THREE.ColorManagement.enabled = true;
+  const pmremGenerator = new THREE.PMREMGenerator(renderer);
+  pmremGenerator.compileCubemapShader();
+
+  const cubeLoader = new THREE.CubeTextureLoader();
+  const envMap = cubeLoader.load(
+    [
+      "/texture/px.jpg",
+      "/texture/nx.jpg",
+      "/texture/py.jpg",
+      "/texture/ny.jpg",
+      "/texture/pz.jpg",
+      "/texture/nz.jpg",
+    ],
+    function (texture) {
+      const pmremTexture = pmremGenerator.fromCubemap(texture).texture;
+      colorScene.environment = texture;
+      colorScene.environmentRotation.set(Math.PI / 2, 0, Math.PI, "XYZ");
+      colorScene.background = texture;
+      colorScene.backgroundRotation.set(Math.PI / 2, 0, Math.PI, "XYZ");
+    }
+  );
+  let waterGeometry = new THREE.PlaneGeometry(100, 100);
+  let waterMaterial = new THREE.MeshStandardMaterial({
+    color: 0x5a75a0,
+    metalness: 1,
+    roughness: 0.27,
+    normalMap: new THREE.TextureLoader().load(
+      "/texture/water_normal.png",
+      (texture) => {
+        texture.flipY = false;
+      }
+    ),
+    normalMapType: THREE.ObjectSpaceNormalMap,
+    side: THREE.DoubleSide,
+  });
+  waterMaterial.normalMap.wrapS = THREE.RepeatWrapping;
+  waterMaterial.normalMap.wrapT = THREE.RepeatWrapping;
+  waterMaterial.normalMap.repeat.set(10, 10);
+
+  let timeUniform = { value: 0 };
+  let resolutionUniform = {
+    value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+  };
+  waterMaterial.onBeforeCompile = (shader, renderer) => {
+    console.log(shader);
+    shader.uniforms.time = timeUniform;
+    shader.uniforms.resolution = resolutionUniform;
+    shader.uniforms.normalDisturbance = normalTextureUniform;
+
+    let chunk = "";
+    for (let dir = 0.1; dir < 2 * Math.PI; dir += (2 * Math.PI) / 3) {
+      chunk += `{
+					mat2 rot2d = mat2(${Math.cos(dir)}, ${-Math.sin(dir)}, ${Math.sin(
+        dir
+      )}, ${Math.cos(dir)});
+					vec3 subNormal = texture2D( normalMap, rot2d * vNormalMapUv + vec2(time*0.03, ${dir}) ).rgb * 2.0 - 1.0;
+					subNormal.xy = rot2d * subNormal.xy;
+					normal += subNormal;
+				}`;
+    }
+    shader.fragmentShader =
+      "uniform float time;\n" +
+      "uniform vec2 resolution;\n" +
+      "uniform sampler2D normalDisturbance;\n" +
+      shader.fragmentShader.replace(
+        "\t#include <normal_fragment_maps>",
+        chunk +
+          `
+					vec3 ripple = texture2D( normalDisturbance, gl_FragCoord.xy / resolution ).rgb * 2.0 - 1.0;
+					normal += 3.0 * ripple;
+					#ifdef FLIP_SIDED
+						normal = - normal;
+					#endif
+					#ifdef DOUBLE_SIDED
+						normal = normal * faceDirection;
+					#endif
+					normal = normalize( normalMatrix * normal );
+					`
+      );
+  };
 };
 const animate = () => {
   requestAnimationFrame(animate);
