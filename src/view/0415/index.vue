@@ -20,6 +20,8 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 let canvasRef = ref(null);
+const clock = new THREE.Clock();
+let previousTime = 0;
 let scene,
   camera,
   renderer,
@@ -170,6 +172,24 @@ const init = () => {
   composer.addPass(fxaaPass);
 };
 const animate = () => {
+  const elapsedTime = clock.getElapsedTime();
+  const deltaTime = elapsedTime - previousTime;
+  previousTime = elapsedTime;
+  camera.position.lerp(
+    vector3
+      .set(0.05 * Math.sin(elapsedTime), 0, 0.01 * Math.cos(elapsedTime))
+      .add(camera.position),
+    0.05
+  );
+  scene.userData.dynamicEnv &&
+    scene.userData.dynamicEnv.children.forEach((item) => {
+      if (item.userData.update) {
+        item.userData.update(deltaTime, elapsedTime);
+      }
+    });
+  scene.background.b = 0.02 * Math.sin(elapsedTime) + 0.04;
+  rtCubeCamera.update(renderer, scene);
+  composer.render(scene, camera);
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
   controls.update();
