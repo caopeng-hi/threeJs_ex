@@ -7,6 +7,12 @@ import { onMounted, ref } from "vue";
 import * as THREE from "three";
 // 导入Controls库
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+// 导入GLTFLoader和DRACOLoader
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+// 导入ReflectorForSSRPass
+import { ReflectorForSSRPass } from "three/examples/jsm/objects/ReflectorForSSRPass";
+import { SSRPass } from "three/examples/jsm/postprocessing/SSRPass";
 let canvasRef = ref(null);
 let scene, camera, renderer, controls;
 let vector3 = new THREE.Vector3();
@@ -69,6 +75,21 @@ const init = () => {
   });
   const cube = new Mesh(geometry, material);
   scene.add(cube);
+
+  // 加载物体模型
+  const gltfLoader = new GLTFLoader();
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath("./draco/");
+  dracoLoader.setDecoderConfig({ type: "js" });
+  loader.setDRACOLoader(dracoLoader);
+  gltfLoader.load("/model/911-draco.glb", (glb) => {
+    const carModel = glb.scene;
+    carModel.name = "911";
+    scene.add(carModel);
+    carModel.position.y += 0.63;
+
+    updateAllMaterials();
+  });
 };
 const animate = () => {
   requestAnimationFrame(animate);
