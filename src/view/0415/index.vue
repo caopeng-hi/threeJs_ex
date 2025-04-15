@@ -20,7 +20,14 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 let canvasRef = ref(null);
-let scene, camera, renderer, controls, composer;
+let scene,
+  camera,
+  renderer,
+  controls,
+  composer,
+  ssrPass,
+  renderTarget,
+  rtCubeCamera;
 let vector3 = new THREE.Vector3();
 const parameters = {
   bloomStrength: 0.3,
@@ -55,6 +62,14 @@ const init = () => {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  renderTarget = new THREE.WebGLCubeRenderTarget(256);
+  renderTarget.texture.type = THREE.HalfFloatType;
+
+  rtCubeCamera = new THREE.CubeCamera(1, 1000, renderTarget);
+  rtCubeCamera.layers.set(1);
+  scene.userData.rtCubeCameraLayer = 1;
+  scene.userData.dynamicMap = renderTarget.texture;
   canvasRef.value.appendChild(renderer.domElement);
   // 创建控制器
   controls = new OrbitControls(camera, renderer.domElement);
@@ -78,7 +93,7 @@ const init = () => {
   ambientLight.intensity = 1;
   ambientLight.name = "ambientLight";
   scene.add(ambientLight);
-
+  createDynamicEnv();
   // 创建物体
   // const geometry = new THREE.BoxGeometry(2, 2, 2);
   // const material = new THREE.MeshBasicMaterial({
@@ -137,7 +152,7 @@ const init = () => {
     1 / (window.innerWidth * pixelRatio);
   fxaaPass.material.uniforms["resolution"].value.y =
     1 / (window.innerHeight * pixelRatio);
-  let ssrPass = new SSRPass({
+  ssrPass = new SSRPass({
     renderer,
     scene,
     camera,
@@ -148,6 +163,11 @@ const init = () => {
   });
   const outputPass = new OutputPass();
   composer = new EffectComposer(renderer);
+  composer.addPass(renderScene);
+  composer.addPass(ssrPass);
+  composer.addPass(bloomPass);
+  composer.addPass(outputPass);
+  composer.addPass(fxaaPass);
 };
 const animate = () => {
   requestAnimationFrame(animate);
