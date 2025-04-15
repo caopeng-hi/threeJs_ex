@@ -9,6 +9,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 let canvasRef = ref(null);
 let scene, camera, renderer, controls;
+let vector3 = new THREE.Vector3();
 onMounted(() => {
   init();
   animate();
@@ -40,6 +41,26 @@ const init = () => {
   canvasRef.value.appendChild(renderer.domElement);
   // 创建控制器
   controls = new OrbitControls(camera, renderer.domElement);
+  controls.maxPolarAngle = Math.PI * 0.46;
+  controls.minPolarAngle = 0.1;
+  controls.minDistance = 4;
+  controls.maxDistance = 15;
+  controls.screenSpacePanning = false;
+  controls.target.set(0.2, 0, 0.3);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+
+  const pointLight = new THREE.SpotLight(0xffffff, 300.0, 0, 0.3, 1);
+  pointLight.position.set(0, 15, 0);
+  pointLight.castShadow = true;
+  pointLight.shadow.autoUpdate = false;
+  pointLight.shadow.bias = -0.0001;
+  scene.add(pointLight);
+  // 环境光
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+  ambientLight.intensity = 1;
+  ambientLight.name = "ambientLight";
+  scene.add(ambientLight);
 
   // 创建物体
   const geometry = new THREE.BoxGeometry(2, 2, 2);
@@ -47,6 +68,7 @@ const init = () => {
     color: "yellow",
   });
   const cube = new Mesh(geometry, material);
+  scene.add(cube);
 };
 const animate = () => {
   requestAnimationFrame(animate);
