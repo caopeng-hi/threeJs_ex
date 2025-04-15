@@ -13,9 +13,20 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 // 导入ReflectorForSSRPass
 import { ReflectorForSSRPass } from "three/examples/jsm/objects/ReflectorForSSRPass";
 import { SSRPass } from "three/examples/jsm/postprocessing/SSRPass";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass";
+import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader";
 let canvasRef = ref(null);
-let scene, camera, renderer, controls;
+let scene, camera, renderer, controls, composer;
 let vector3 = new THREE.Vector3();
+const parameters = {
+  bloomStrength: 0.3,
+  bloomThreshold: 0.1,
+  bloomRadius: 0.6,
+};
 onMounted(() => {
   init();
   animate();
@@ -75,7 +86,23 @@ const init = () => {
   // });
   // const cube = new THREE.Mesh(geometry, material);
   // scene.add(cube);
-
+  //  -----> 加载纹理
+  const cubeTextureLoader = new THREE.CubeTextureLoader();
+  const envMap = cubeTextureLoader.load([
+    "/texture/px.png",
+    "/texture/nx.png",
+    "/texture/py.png",
+    "/texture/ny.png",
+    "/texture/pz.png",
+    "/texture/nz.png",
+  ]);
+  envMap.mapping = THREE.CubeRefractionMapping;
+  const textureLoader = new THREE.TextureLoader();
+  let skyTextureEquirec = textureLoader.load(
+    import.meta.env.BASE_URL + "texture/envmap/room.png"
+  );
+  skyTextureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+  skyTextureEquirec.colorSpace = THREE.SRGBColorSpace;
   // 加载物体模型
   const gltfLoader = new GLTFLoader();
   const dracoLoader = new DRACOLoader();
@@ -90,6 +117,37 @@ const init = () => {
 
     updateAllMaterials();
   });
+
+  //  后期渲染
+  const renderScene = new RenderPass(scene, camera);
+  // 辉光处理通道
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    1.5,
+    0.4,
+    0.85
+  );
+  bloomPass.threshold = parameters.bloomThreshold;
+  bloomPass.strength = parameters.bloomStrength;
+  bloomPass.radius = parameters.bloomRadius;
+  // 抗锯齿处理通道
+  const fxaaPass = new ShaderPass(FXAAShader);
+  const pixelRatio = renderer.getPixelRatio();
+  fxaaPass.material.uniforms["resolution"].value.x =
+    1 / (window.innerWidth * pixelRatio);
+  fxaaPass.material.uniforms["resolution"].value.y =
+    1 / (window.innerHeight * pixelRatio);
+  let ssrPass = new SSRPass({
+    renderer,
+    scene,
+    camera,
+    width: innerWidth,
+    height: innerHeight,
+    groundReflector: null,
+    selects: [],
+  });
+  const outputPass = new OutputPass();
+  composer = new EffectComposer(renderer);
 };
 const animate = () => {
   requestAnimationFrame(animate);
@@ -134,6 +192,78 @@ const updateAllMaterials = () => {
   // 更新阴影
   scene.getObjectByProperty("type", "SpotLight").shadow.needsUpdate = true;
 };
+function createDynamicEnv() {
+  const group = new THREE.Group();
+  group.name = "dynamicEnv";
+  scene.userData.dynamicEnv = group;
+  scene.add(group);
+  const rect = new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 5),
+    new THREE.MeshBasicMaterial({
+      color: "#fff",
+      side: THREE.DoubleSide,
+    })
+  );
+  rect.position.set(3, 2, 0);
+  rect.rotation.set(-Math.PI * 0.5, Math.PI * 0.1, 0);
+  rect.name = "rect";
+  rect.userData.update = (deltaTime, elapsedTime) => {
+    rect.position.y = Math.abs(Math.sin(elapsedTime * 0.5)) + 1;
+    rect.position.z = 0.5 * Math.sin(elapsedTime * 0.5);
+  };
+
+  const rect2 = new THREE.Mesh(
+    new THREE.PlaneGeometry(5, 5),
+    new THREE.MeshBasicMaterial({
+      color: "#5c67ff",
+      side: THREE.DoubleSide,
+    })
+  );
+  rect2.rotation.set(-Math.PI * 0.2, -Math.PI * 0.3, -Math.PI * 0.2);
+  rect2.position.set(-3.5, 0, 0);
+
+  const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(5, 32, 32),
+    new THREE.MeshBasicMaterial({
+      color: "#5a509f",
+      side: THREE.BackSide,
+    })
+  );
+
+  const cube = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1),
+    new THREE.MeshBasicMaterial({
+      color: "#66edff",
+      // side: THREE.FrontSide,
+    })
+  );
+  cube.userData.update = (deltaTime, elapsedTime) => {
+    cube.position.x = 1 * Math.sin(elapsedTime) - 1;
+    cube.position.y = Math.sin(elapsedTime) + 1.5;
+    cube.position.z = Math.cos(elapsedTime) - 1;
+  };
+
+  const ring = new THREE.Mesh(
+    new THREE.CylinderGeometry(2, 2, 0.5, 16, 1, true),
+    new THREE.MeshBasicMaterial({
+      color: "#fafeff",
+      side: THREE.DoubleSide,
+    })
+  );
+  ring.rotation.set(Math.PI * 0.5, 0, 0);
+  ring.userData.update = (deltaTime, elapsedTime) => {
+    ring.position.z += 2 * deltaTime;
+    if (ring.position.z > 4) {
+      ring.position.z = -5;
+    }
+  };
+
+  group.add(rect, rect2, sphere, cube, ring);
+
+  group.children.forEach((item) => {
+    item.layers.set(scene.userData.rtCubeCameraLayer);
+  });
+}
 </script>
 <style scoped>
 .canvasRef {
