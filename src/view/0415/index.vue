@@ -23,7 +23,7 @@ onMounted(() => {
 const init = () => {
   // 创建场景
   scene = new THREE.Scene();
-  scene.background = new Color(0x000000);
+  scene.background = new THREE.Color(0x000000);
   scene.background.setRGB(0.01, 0.005, 0.05);
   scene.backgroundBlurriness = 0.5;
   // 创建相机
@@ -36,8 +36,8 @@ const init = () => {
   camera.position.set(-2.95, 1.33, 3.91);
   // 创建渲染器
   renderer = new THREE.WebGLRenderer({
-    canvas: container,
     antialias: true, //抗锯齿
+    alpha: true, //透明
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -69,19 +69,19 @@ const init = () => {
   scene.add(ambientLight);
 
   // 创建物体
-  const geometry = new THREE.BoxGeometry(2, 2, 2);
-  const material = new THREE.MeshBasicMaterial({
-    color: "yellow",
-  });
-  const cube = new Mesh(geometry, material);
-  scene.add(cube);
+  // const geometry = new THREE.BoxGeometry(2, 2, 2);
+  // const material = new THREE.MeshBasicMaterial({
+  //   color: "yellow",
+  // });
+  // const cube = new THREE.Mesh(geometry, material);
+  // scene.add(cube);
 
   // 加载物体模型
   const gltfLoader = new GLTFLoader();
   const dracoLoader = new DRACOLoader();
   dracoLoader.setDecoderPath("./draco/");
   dracoLoader.setDecoderConfig({ type: "js" });
-  loader.setDRACOLoader(dracoLoader);
+  gltfLoader.setDRACOLoader(dracoLoader);
   gltfLoader.load("/model/911-draco.glb", (glb) => {
     const carModel = glb.scene;
     carModel.name = "911";
@@ -95,6 +95,44 @@ const animate = () => {
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
   controls.update();
+};
+const updateAllMaterials = () => {
+  scene.getObjectByName("911").traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+      child.material.envMap = scene.userData.dynamicMap;
+
+      if (child.material.name === "rubber") {
+        child.material.color.set("#222");
+        child.material.roughness = 1;
+        child.material.normalScale.set(4, 4);
+        child.material.envMap = scene.userData.dynamicMap;
+      }
+      if (child.material.name === "window") {
+        child.material.color.set("#222");
+        child.material.roughness = 0;
+        child.material.clearcoat = 0.1;
+        child.material.envMap = scene.userData.dynamicMap;
+      }
+      if (child.material.name === "coat") {
+        child.material.envMapIntensity = 4;
+        child.material.roughness = 0.5;
+        child.material.metalness = 1;
+        child.material.envMap = scene.userData.dynamicMap;
+      }
+      if (child.material.name === "paint") {
+        child.material.envMapIntensity = 2;
+        child.material.roughness = 0.45;
+        child.material.metalness = 0.8;
+        child.material.envMap = scene.userData.dynamicMap;
+        child.material.color.set("#b3b3ff");
+      }
+    }
+  });
+
+  // 更新阴影
+  scene.getObjectByProperty("type", "SpotLight").shadow.needsUpdate = true;
 };
 </script>
 <style scoped>
