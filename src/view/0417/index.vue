@@ -13,7 +13,8 @@ import fragmentShader from "../../shader/0417/frag.glsl?raw";
 // 导入gsap 库
 import gsap from "gsap";
 const canvasRef = ref(null);
-let scene, camera, renderer, geometry, material, cube, controls;
+let scene, camera, renderer, geometry, material, cube, controls, materials;
+const clock = new THREE.Clock();
 const params = {
   color: "#00d5ff",
   stageColor: "#d4d4d4",
@@ -138,12 +139,32 @@ function init() {
   torus.position.y = posY;
   scene.add(torus);
 
-  const materials = [torusKnotMaterial, icosahedronMaterial, torusMaterial];
+  materials = [torusKnotMaterial, icosahedronMaterial, torusMaterial];
 }
 function animate() {
-  // 旋转立方体
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
+  const delta = clock.getDelta();
+  const elapsedTime = clock.getElapsedTime();
+  const newIndex = Math.floor((elapsedTime * 0.25) % 3);
+  if (newIndex !== params.currentIndex) {
+    params.currentIndex = newIndex;
+    params.nextIndex = newIndex === 2 ? 0 : newIndex + 1;
+    materials.forEach((material) => {
+      material.uniforms.uCurrentIndex.value = params.currentIndex;
+      material.uniforms.uNextIndex.value = params.nextIndex;
+      gsap.fromTo(
+        material.uniforms.uProgress,
+        { value: 0 },
+        { value: 1, duration: 1.5, ease: "linear" }
+      );
+    });
+  }
+  torusKnot.rotation.y += delta * 0.5;
+  torusKnot.rotation.x += delta * 0.5;
+  torus.rotation.y += delta * 0.5;
+  torus.rotation.x += delta * 0.5;
+
+  torusMaterial.uniforms.uTime.value = elapsedTime;
+  icosahedronMaterial.uniforms.uTime.value = elapsedTime;
   // 渲染场景
   renderer.render(scene, camera);
   // 递归调用animate函数
