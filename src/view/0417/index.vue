@@ -14,6 +14,7 @@ import fragmentShader from "../../shader/0417/frag.glsl?raw";
 import gsap from "gsap";
 const canvasRef = ref(null);
 let scene, camera, renderer, geometry, material, cube, controls, materials;
+let torusKnot, torus, torusMaterial, icosahedronMaterial;
 const clock = new THREE.Clock();
 const params = {
   color: "#00d5ff",
@@ -123,19 +124,19 @@ function init() {
   // 创建圆环结
   const torusKnotMaterial = baseMaterial.clone();
   torusKnotMaterial.uniforms.uIndex.value = 0;
-  const torusKnot = new THREE.Mesh(torusknotGeometry, torusKnotMaterial);
+  torusKnot = new THREE.Mesh(torusknotGeometry, torusKnotMaterial);
   torusKnot.position.y = posY;
   scene.add(torusKnot);
 
-  const icosahedronMaterial = baseMaterial.clone();
+  icosahedronMaterial = baseMaterial.clone();
   icosahedronMaterial.uniforms.uIndex.value = 1;
   const icosahedron = new THREE.Mesh(icosahedronGeometry, icosahedronMaterial);
   icosahedron.position.y = posY;
   scene.add(icosahedron);
 
-  const torusMaterial = baseMaterial.clone();
+  torusMaterial = baseMaterial.clone();
   torusMaterial.uniforms.uIndex.value = 2;
-  const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+  torus = new THREE.Mesh(torusGeometry, torusMaterial);
   torus.position.y = posY;
   scene.add(torus);
 
