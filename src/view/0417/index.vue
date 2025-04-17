@@ -7,6 +7,9 @@ import { onMounted, ref } from "vue";
 import * as THREE from "three";
 // 导入Controls库
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+// 导入着色器
+import vertexShader from "../../shader/0417/vert.glsl?raw";
+import fragmentShader from "../../shader/0417/frag.glsl?raw";
 // 导入gsap 库
 import gsap from "gsap";
 const canvasRef = ref(null);
@@ -74,6 +77,15 @@ function init() {
   pLight.position.set(0, -1.3, 0);
   scene.add(pLight);
   // 创建基础材质
+
+  const baseMaterial = new THREE.ShaderMaterial({
+    vertexShader: vertexShader,
+    fragmentShader: fragmentShader,
+    uniforms,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+  });
+  baseMaterial.depthWrite = false;
 }
 function animate() {
   // 旋转立方体
