@@ -86,6 +86,59 @@ function init() {
     blending: THREE.AdditiveBlending,
   });
   baseMaterial.depthWrite = false;
+  // 创建物体
+  const cylinder = new THREE.Mesh(
+    new THREE.CylinderGeometry(2, 2, 0.5, 128),
+    new THREE.MeshStandardMaterial({
+      color: new THREE.Color(params.stageColor),
+    })
+  );
+  cylinder.position.set(0, -2, 0);
+  scene.add(cylinder);
+  // 创建圆环
+  const torusknotGeometry = new THREE.TorusKnotGeometry(1, 0.5, 128, 32);
+  torusknotGeometry.computeBoundingBox(); // 计算几何体的包围盒
+  const icosahedronGeometry = new THREE.IcosahedronGeometry(2, 24); // 创建一个IcosahedronGeometry
+  icosahedronGeometry.computeBoundingBox(); // 计算几何体的包围盒
+  const torusGeometry = new THREE.TorusGeometry(1.4, 0.5, 128, 32); // 创建一个TorusGeometry
+  torusGeometry.computeBoundingBox(); // 计算几何体的包围盒
+
+  // 计算所有几何体的最小和最大Y坐标
+  const minY = Math.min(
+    torusknotGeometry.boundingBox.min.y,
+    icosahedronGeometry.boundingBox.min.y,
+    torusGeometry.boundingBox.min.y
+  );
+  const maxY = Math.max(
+    torusknotGeometry.boundingBox.max.y,
+    icosahedronGeometry.boundingBox.max.y,
+    torusGeometry.boundingBox.max.y
+  );
+  const margin = 0.1;
+  const posY = 0.5;
+  uniforms.uMinY.value = minY + posY - margin;
+  uniforms.uMaxY.value = maxY + posY + margin;
+
+  // 创建圆环结
+  const torusKnotMaterial = baseMaterial.clone();
+  torusKnotMaterial.uniforms.uIndex.value = 0;
+  const torusKnot = new THREE.Mesh(torusknotGeometry, torusKnotMaterial);
+  torusKnot.position.y = posY;
+  scene.add(torusKnot);
+
+  const icosahedronMaterial = baseMaterial.clone();
+  icosahedronMaterial.uniforms.uIndex.value = 1;
+  const icosahedron = new THREE.Mesh(icosahedronGeometry, icosahedronMaterial);
+  icosahedron.position.y = posY;
+  scene.add(icosahedron);
+
+  const torusMaterial = baseMaterial.clone();
+  torusMaterial.uniforms.uIndex.value = 2;
+  const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+  torus.position.y = posY;
+  scene.add(torus);
+
+  const materials = [torusKnotMaterial, icosahedronMaterial, torusMaterial];
 }
 function animate() {
   // 旋转立方体
