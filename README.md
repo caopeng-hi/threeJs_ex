@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-14 14:56:49
+ * @LastEditTime: 2025-04-19 21:36:38
  * @Description: 请填写简介
 -->
 
@@ -100,3 +100,13 @@
   [水波小球](https://github.com/caopeng-hi/img/blob/main/20250414_145327.gif)
 
   <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250414_145327.gif" alt="水波小球">
+
+- 0415 保时捷 911
+  [保时捷 911] (https://github.com/caopeng-hi/img/blob/main/20250419_212724.gif)
+
+<img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250419_212724.gif" alt="保时捷 911">
+
+- 0417 全息投影
+  [全息投影] (https://github.com/caopeng-hi/img/blob/main/20250419_212509.gif)
+
+<img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250419_212509.gif" alt="全息投影">
