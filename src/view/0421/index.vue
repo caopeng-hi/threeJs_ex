@@ -7,8 +7,17 @@ import { onMounted, ref } from "vue";
 import * as THREE from "three";
 // 导入Controls库
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+// 导入着色器
+import vertexShader from "../../shader/0421/vert.glsl?raw";
+import fragmentShader from "../../shader/0421/frag.glsl?raw";
 let canvasRef = ref(null);
 let camera, scene, renderer, controls;
+let uniforms = {
+  u_time: { type: "f", value: 0.0 },
+  u_resolution: { type: "v2", value: new THREE.Vector2() },
+  u_mouse: { type: "v2", value: new THREE.Vector2() },
+  u_complex: { type: "b", value: false },
+};
 onMounted(() => {
   init();
   animate();
@@ -24,7 +33,7 @@ const init = () => {
     1000
   );
   // 设置相机位置
-  camera.position.z = 5;
+  camera.position.z = 1;
   // 创建渲染器
   renderer = new THREE.WebGLRenderer();
   // 设置渲染器大小
@@ -33,6 +42,16 @@ const init = () => {
   canvasRef.value.appendChild(renderer.domElement);
   // 创建控制器
   controls = new OrbitControls(camera, renderer.domElement);
+
+  // 创建物体
+  const geometry = new THREE.PlaneGeometry(2, 2);
+  const material = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: document.getElementById("vertexShader").textContent,
+    fragmentShader: document.getElementById("fragmentShader").textContent,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
 };
 const animate = () => {
   requestAnimationFrame(animate);
