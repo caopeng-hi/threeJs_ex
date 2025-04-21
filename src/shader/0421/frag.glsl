@@ -75,5 +75,32 @@
       return fbm1( uv + 4.0*v, seed );
     }
 void main(){
-    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+      
+      float time = u_time / 10.;
+      
+      mat2 rot = mat2(cos(time / 10.), sin(time / 10.),
+                      -sin(time / 10.), cos(time / 10.));
+      
+      uv = rot * uv;
+      uv *= 0.9 * (sin(u_time / 20.)) + 3.;
+      uv.x -= time / 5.;
+      
+      vec2 q = vec2(0.,0.);
+      vec2 r = vec2(0.,0.);
+      
+      float _pattern = 0.;
+      
+      if(u_complex) {
+        _pattern = pattern2(uv, seed, time, q, r);
+      } else {
+        _pattern = pattern(uv, seed, time, q, r);
+      }
+      
+      vec3 colour = vec3(_pattern) * 2.;
+      colour.r -= dot(q, r) * 15.;
+      colour = mix(colour, vec3(pattern(r, seed2, time, q, r), dot(q, r) * 15., -0.1), .5);
+      colour -= q.y * 1.5;
+      colour = mix(colour, vec3(.2, .2, .2), (clamp(q.x, -1., 0.)) * 3.);
+      gl_FragColor = vec4(-colour + (abs(colour) * .5), 1.);
 }
