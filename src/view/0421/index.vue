@@ -11,10 +11,13 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import vertexShader from "../../shader/0421/vert.glsl?raw";
 import fragmentShader from "../../shader/0421/frag.glsl?raw";
 let canvasRef = ref(null);
-let camera, scene, renderer, controls;
+let camera, scene, renderer, controls, material;
 let uniforms = {
   u_time: { type: "f", value: 0.0 },
-  u_resolution: { type: "v2", value: new THREE.Vector2() },
+  u_resolution: {
+    type: "v2",
+    value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+  },
   u_mouse: { type: "v2", value: new THREE.Vector2() },
   u_complex: { type: "b", value: false },
 };
@@ -30,6 +33,11 @@ onMounted(() => {
 const init = () => {
   // 创建场景
   scene = new THREE.Scene();
+  // 设置场景背景颜色
+  scene.background = new THREE.Color(0xffffff);
+  // 添加辅助坐标轴
+  const axesHelper = new THREE.AxesHelper(5);
+  scene.add(axesHelper);
   // 创建相机
   camera = new THREE.PerspectiveCamera(
     75,
@@ -50,10 +58,10 @@ const init = () => {
 
   // 创建物体
   const geometry = new THREE.PlaneGeometry(2, 2);
-  const material = new THREE.ShaderMaterial({
+  material = new THREE.ShaderMaterial({
     uniforms: uniforms,
-    vertexShader: document.getElementById("vertexShader").textContent,
-    fragmentShader: document.getElementById("fragmentShader").textContent,
+    vertexShader: vertexShader,
+    fragmentShader,
   });
   const mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
@@ -64,10 +72,11 @@ const animate = () => {
   renderer.render(scene, camera);
   // 更新控制器
   controls.update();
-  uniforms.u_time.value += 0.05 * (1 + uniforms.u_mouse.value.x / 200.0);
+  material.uniforms.u_time.value +=
+    0.05 * (1 + material.uniforms.u_mouse.value.x / 200.0);
 };
 function onMouseUp() {
-  uniforms.u_complex.value = !uniforms.u_complex.value;
+  material.uniforms.u_complex.value = !material.uniforms.u_complex.value;
 }
 </script>
 <style scoped>
