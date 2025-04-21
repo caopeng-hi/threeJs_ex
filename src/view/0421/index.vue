@@ -21,6 +21,11 @@ let uniforms = {
 onMounted(() => {
   init();
   animate();
+  document.addEventListener("mouseup", onMouseUp, false);
+  document.onmousemove = function (e) {
+    uniforms.u_mouse.value.x = e.pageX;
+    uniforms.u_mouse.value.y = e.pageY;
+  };
 });
 const init = () => {
   // 创建场景
@@ -59,7 +64,11 @@ const animate = () => {
   renderer.render(scene, camera);
   // 更新控制器
   controls.update();
+  uniforms.u_time.value += 0.05 * (1 + uniforms.u_mouse.value.x / 200.0);
 };
+function onMouseUp() {
+  uniforms.u_complex.value = !uniforms.u_complex.value;
+}
 </script>
 <style scoped>
 .canvasRef {
