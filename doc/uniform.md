@@ -32,3 +32,48 @@ posY.value = mesh.position.y;
 
 material.colorNode = posY;
 ```
+
+##### uniform.on\*Update()
+
+###### uniform.onObjectUpdate( function )
+
+一个自定义回调函数，用于在 特定对象（如 THREE.Object3D）更新时 动态修改 uniform 变量的值。它通常用于 基于场景对象状态（如位置、旋转、缩放等）动态调整着色器参数。
+
+- 作用
+
+  1. 自动绑定到对象更新事件：当关联的 THREE.Object3D（如 Mesh、Camera、Light）发生变化（位置、旋转、缩放等）时，触发回调
+
+  2. 动态更新 uniform：在回调中计算新的 uniform 值，使其与对象状态同步
+
+  3. 避免手动每帧更新：相比 uniform.onUpdate()（每帧调用），onObjectUpdate() 仅在对象变化时触发，性能更优
+
+###### uniform..onRenderUpdate( function )
+
+一个自定义回调函数，主要作用是在每次渲染时调用指定的回调函数，以更新与渲染相关的参数。这些参数可能包括但不限于：
+
+- 作用
+
+1.  共享材质的属性。例如，在动画或交互式场景中，根据用户输入或时间变化更新材质的纹理或颜色
+
+2.  雾效果（如雾的颜色、密度等）。 在渲染过程中，如果需要根据场景的变化（如相机位置、时间等）动态调整雾的密度或颜色，onRenderUpdate 可以提供灵活的支持
+
+3.  色调映射相关的参数。在复杂的渲染场景中，可能需要根据场景的光照条件或画面内容动态调整色调映射参数，以优化视觉效果。onRenderUpdate 可以用于实现这一功能。
+
+通过这个函数，可以动态调整渲染过程中的参数，确保渲染结果符合预期的视觉效果。
+
+- 示例
+
+```js
+uniform.onRenderUpdate(function () {
+  // 假设 fogDensity 是一个全局变量，根据时间或其他条件动态变化
+  let fogDensity = calculateFogDensity();
+  this.uniforms.fogDensity.value = fogDensity;
+});
+
+/**
+ * 在这个示例中，calculateFogDensity 是一个自定义函数，用于计算雾的密度。
+ * 通过 onRenderUpdate 回调，每次渲染时都会更新雾的密度，从而实现动态效果。
+ */
+```
+
+###### uniform.onFrameUpdate( function )
