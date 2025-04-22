@@ -49,7 +49,7 @@ material.colorNode = posY;
 
 ###### uniform..onRenderUpdate( function )
 
-一个自定义回调函数，主要作用是在每次渲染时调用指定的回调函数，以更新与渲染相关的参数。这些参数可能包括但不限于：
+一个自定义回调函数，主要作用是在每次渲染时调用指定的回调函数，以更新与渲染相关的参数
 
 - 作用
 
@@ -77,3 +77,44 @@ uniform.onRenderUpdate(function () {
 ```
 
 ###### uniform.onFrameUpdate( function )
+
+一个自定义回调函数，是一个与渲染帧更新相关的函数，通常用于在每一帧渲染时动态更新与渲染相关的参数
+
+- 作用
+
+  1. 动态变化的材质属性（如颜色、纹理等）。
+
+  ```js
+  /**
+   *  在动画或交互式场景中，可能需要根据时间或用户输入动态调整材质的属性。例如，实现材质颜色的渐变或纹理的动态变化：
+   */
+  uniform.onFrameUpdate(function (time) {
+    // 假设 time 是当前帧的时间戳
+    const color = new THREE.Color().setHSL(time % 1, 0.5, 0.5);
+    this.uniforms.materialColor.value = color;
+  });
+  ```
+
+  2. 场景中的光照参数（如光源位置、强度等）。
+
+  ```js
+  /**
+   * 在需要根据场景变化动态调整光源属性时，可以使用 onFrameUpdate。例如，模拟一天中光照强度的变化
+   */
+  uniform.onFrameUpdate(function (time) {
+    const lightIntensity = Math.sin(time) * 0.5 + 0.5; // 光照强度在 0.5 到 1 之间变化
+    this.uniforms.lightIntensity.value = lightIntensity;
+  });
+  ```
+
+  3. 相机或视图相关的参数（如视角、视距等）。
+
+  ```js
+  /**
+   * 在某些交互式场景中，可能需要根据用户操作或动画需求动态调整相机的视角或视距,
+   * 每一帧都会更新相机位置，从而确保渲染效果与相机视角保持一致。
+   */
+  uniform.onFrameUpdate(function (cameraPosition) {
+    this.uniforms.cameraPosition.value = cameraPosition;
+  });
+  ```
