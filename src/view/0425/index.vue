@@ -8,6 +8,8 @@ import * as THREE from "three";
 // 导入Controls库
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { RectAreaLightHelper } from "three/examples/jsm/helpers/RectAreaLightHelper";
+import { FontLoader } from "three/addons/loaders/FontLoader.js";
+import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 const canvasRef = ref(null);
 let scene, camera, renderer, controls;
 const config = {
@@ -94,6 +96,39 @@ const init = () => {
   scene.add(wall);
   wall.position.y = 10;
   wall.position.z = -10.3;
+
+  const wall2 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 20, 20), wallMat);
+  scene.add(wall2);
+  wall2.position.y = 10;
+  wall2.position.x = -12;
+
+  const wall3 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 20, 20), wallMat);
+  scene.add(wall3);
+  wall3.position.y = 10;
+  wall3.position.x = 12;
+
+  // text3D加载器
+  const loader = new FontLoader();
+  const font = loader.load(
+    "/font/Source_Han_Sans_CN_Regular_Regular.json",
+    (font) => {
+      console.log(font);
+      const geometry = new TextGeometry(config.text, {
+        font: font,
+        size: 3,
+        height: 0.2,
+        curveSegments: 120,
+        bevelEnabled: false,
+      });
+      geometry.center(); // 居中
+      const material = new THREE.MeshBasicMaterial({
+        color: config.color,
+      });
+      const text = new THREE.Mesh(geometry, material);
+      scene.add(text);
+      text.position.y = 1.54;
+    }
+  );
 };
 const animate = () => {
   requestAnimationFrame(animate);
