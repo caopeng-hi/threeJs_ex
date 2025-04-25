@@ -109,26 +109,38 @@ const init = () => {
 
   // text3D加载器
   const loader = new FontLoader();
-  const font = loader.load(
-    "/font/Source_Han_Sans_CN_Regular_Regular.json",
-    (font) => {
-      console.log(font);
-      const geometry = new TextGeometry(config.text, {
-        font: font,
-        size: 3,
-        height: 0.2,
-        curveSegments: 120,
-        bevelEnabled: false,
-      });
-      geometry.center(); // 居中
-      const material = new THREE.MeshBasicMaterial({
-        color: config.color,
-      });
-      const text = new THREE.Mesh(geometry, material);
-      scene.add(text);
-      text.position.y = 1.54;
-    }
-  );
+  loader.load("/font/Source_Han_Sans_CN_Regular_Regular.json", (font) => {
+    const geometry = new TextGeometry(config.text, {
+      font: font,
+      size: 3,
+      height: 0.2,
+      curveSegments: 120,
+      bevelEnabled: false,
+    });
+    geometry.center(); // 居中
+    const material = new THREE.MeshBasicMaterial({
+      color: config.color,
+    });
+    const text = new THREE.Mesh(geometry, material);
+    scene.add(text);
+    text.position.y = 1.54;
+  });
+
+  // 创建雨地面
+  // 加载地面纹理
+  const fNormalTex = textureLoader.load("/texture/0425/floor-normal.jpg");
+  const fOpacityTex = textureLoader.load("/texture/0425/floor-opacity.jpg");
+  const fRoughnessTex = textureLoader.load("/texture/0425/floor-roughness.jpg");
+  fNormalTex.wrapS = fNormalTex.wrapT = THREE.MirroredRepeatWrapping;
+  fOpacityTex.wrapS = fOpacityTex.wrapT = THREE.MirroredRepeatWrapping;
+  fRoughnessTex.wrapS = fRoughnessTex.wrapT = THREE.MirroredRepeatWrapping;
+
+  // custom reflector
+  const plan = new THREE.PlaneGeometry(25, 100);
+  // 反射镜面
+  const mirror = new THREE.Mesh(plan, []);
+  mirror.position.z = -25;
+  mirror.rotation.x = -Math.PI / 2;
 };
 const animate = () => {
   requestAnimationFrame(animate);
