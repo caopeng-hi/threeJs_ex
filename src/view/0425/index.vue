@@ -10,6 +10,11 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { RectAreaLightHelper } from "three/examples/jsm/helpers/RectAreaLightHelper";
 import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
+// 导入Reflector
+import { Reflector } from "three/addons/objects/Reflector.js";
+// 导入着色器
+import vertexShader from "../../shader/0425/vert.glsl?raw";
+import fragmentShader from "../../shader/0425/frag.glsl?raw";
 const canvasRef = ref(null);
 let scene, camera, renderer, controls;
 const config = {
@@ -138,9 +143,43 @@ const init = () => {
   // custom reflector
   const plan = new THREE.PlaneGeometry(25, 100);
   // 反射镜面
-  const mirror = new THREE.Mesh(plan, []);
+  const mirror = new Reflector(plan);
   mirror.position.z = -25;
   mirror.rotation.x = -Math.PI / 2;
+  mirror.material.uniforms = {
+    ...mirror.material.uniforms,
+    ...{
+      uNormalTexture: {
+        value: fNormalTex,
+      },
+      uOpacityTexture: {
+        value: fOpacityTex,
+      },
+      uRoughnessTexture: {
+        value: fRoughnessTex,
+      },
+      uRainCount: {
+        value: count,
+      },
+      uTexScale: {
+        value: new THREE.Vector2(1, 4),
+      },
+      uTexOffset: {
+        value: new THREE.Vector2(1, -0.5),
+      },
+      uDistortionAmount: {
+        value: 0.25,
+      },
+      uBlurStrength: {
+        value: 8,
+      },
+      uMipmapTextureSize: {
+        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+      },
+    },
+  };
+  mirror.material.vertexShader = vertexShader;
+  mirror.material.fragmentShader = fragmentShader;
 };
 const animate = () => {
   requestAnimationFrame(animate);
