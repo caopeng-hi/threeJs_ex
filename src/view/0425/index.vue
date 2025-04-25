@@ -27,6 +27,11 @@ const init = () => {
   THREE.ColorManagement.enabled = false;
   // 创建场景
   scene = new THREE.Scene();
+  // 添加颜色
+  scene.background = new THREE.Color("#ffffff");
+  // 添加坐标轴辅助器
+  const axesHelper = new THREE.AxesHelper(5);
+  scene.add(axesHelper);
   // 创建相机
   camera = new THREE.PerspectiveCamera(
     75,
@@ -49,8 +54,6 @@ const init = () => {
   // 创建控制器
   controls = new OrbitControls(camera, renderer.domElement);
   controls.target = lookAt;
-  // 添加控制器
-  scene.add(controls);
 
   // 添加灯光
   const pointLight1 = new THREE.PointLight(config.color, 0.5, 17, 0.8);
@@ -73,6 +76,24 @@ const init = () => {
   // 添加矩形灯光辅助器
   const rectLightHelper = new RectAreaLightHelper(rectLight1);
   rectLight1.add(rectLightHelper);
+
+  // 添加贴图图片
+  const textureLoader = new THREE.TextureLoader();
+  const aspTex = textureLoader.load("/texture/0425/asphalt-normal.jpg");
+  aspTex.rotation = THREE.MathUtils.degToRad(90);
+  aspTex.wrapS = aspTex.wrapT = THREE.RepeatWrapping;
+  aspTex.repeat.set(5, 8);
+  // 添加地面
+  const wallMat = new THREE.MeshPhongMaterial({
+    color: new THREE.Color("#111111"),
+    normalMap: aspTex,
+    normalScale: new THREE.Vector2(0.5, 0.5),
+    shininess: 200,
+  });
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(25, 20, 0.5), wallMat);
+  scene.add(wall);
+  wall.position.y = 10;
+  wall.position.z = -10.3;
 };
 const animate = () => {
   requestAnimationFrame(animate);
