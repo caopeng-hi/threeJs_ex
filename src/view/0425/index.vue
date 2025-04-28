@@ -21,7 +21,7 @@ import rainFragShader from "../../shader/0425/rainFrag.glsl?raw";
 import { PackedMipMapGenerator } from "../../utils/PackedMipMapGenerator.ts";
 import { FBO } from "../../utils/FBO.ts";
 const canvasRef = ref(null);
-let scene, camera, renderer, controls, mipmapper, mirrorFBO;
+let scene, camera, renderer, controls, mipmapper, mirrorFBO, rainMat;
 const config = {
   text: "hello world",
   color: "#ef77eb",
@@ -190,13 +190,13 @@ const init = () => {
   // 雨
   const rNormalTex = textureLoader.load("/texture/0425/rain-normal.png");
   rNormalTex.flipY = false;
-  const rainMat = new THREE.ShaderMaterial({
+  rainMat = new THREE.ShaderMaterial({
     vertexShader: rainVertShader,
     fragmentShader: rainFragShader,
     uniforms: {
       ...{
         uSpeed: {
-          value: speed,
+          value: config.speed,
         },
         uHeightRange: {
           value: 20,
@@ -216,6 +216,44 @@ const init = () => {
       },
     },
   });
+  const rain = new THREE.InstancedMesh(
+    new THREE.PlaneGeometry(),
+    rainMat,
+    config.count
+  );
+  rain.instanceMatrix.needsUpdate = true;
+  const dummy = new THREE.Object3D();
+  const progressArr = [];
+  const speedArr = [];
+  for (let i = 0; i < config.count; i++) {
+    dummy.position.set(
+      THREE.MathUtils.randFloat(-10, 10),
+      0,
+      THREE.MathUtils.randFloat(-20, 10)
+    );
+    dummy.scale.set(0.03, THREE.MathUtils.randFloat(0.3, 0.5), 0.03);
+    if (config.debug) {
+      dummy.scale.setScalar(1);
+      rainMat.uniforms.uSpeed.value = 0;
+    }
+    dummy.updateMatrix();
+    rain.setMatrixAt(i, dummy.matrix);
+
+    progressArr.push(Math.random());
+    speedArr.push(dummy.scale.y * 10);
+  }
+  rain.rotation.set(-0.1, 0, 0.1);
+  rain.position.set(0, 4, 4);
+
+  rain.geometry.setAttribute(
+    "aProgress",
+    new THREE.InstancedBufferAttribute(new Float32Array(progressArr), 1)
+  );
+  rain.geometry.setAttribute(
+    "aSpeed",
+    new THREE.InstancedBufferAttribute(new Float32Array(speedArr), 1)
+  );
+  scene.add(rain);
 };
 const animate = () => {
   requestAnimationFrame(animate);
