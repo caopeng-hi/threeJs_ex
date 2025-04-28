@@ -15,10 +15,15 @@ import { Reflector } from "three/addons/objects/Reflector.js";
 // 导入着色器
 import vertexShader from "../../shader/0425/vert.glsl?raw";
 import fragmentShader from "../../shader/0425/frag.glsl?raw";
+// 导入雨着色器
+import rainVertShader from "../../shader/0425/rainVert.glsl?raw";
+import rainFragShader from "../../shader/0425/rainFrag.glsl?raw";
+import { PackedMipMapGenerator } from "../../utils/PackedMipMapGenerator.ts";
+import { FBO } from "../../utils/FBO.ts";
 const canvasRef = ref(null);
-let scene, camera, renderer, controls;
+let scene, camera, renderer, controls, mipmapper, mirrorFBO;
 const config = {
-  text: "love",
+  text: "hello world",
   color: "#ef77eb",
   rain: {
     count: 1000,
@@ -175,7 +180,42 @@ const init = () => {
   };
   mirror.material.vertexShader = vertexShader;
   mirror.material.fragmentShader = fragmentShader;
+  mipmapper = new PackedMipMapGenerator();
+  mirrorFBO = mirror.getRenderTarget();
+  const mipmapFBO = new FBO();
+
+  // mirror.material.uniforms.tDiffuse.value = mipmapFBO.rt.texture;
   scene.add(mirror);
+
+  // 雨
+  const rNormalTex = textureLoader.load("/texture/0425/rain-normal.png");
+  rNormalTex.flipY = false;
+  const rainMat = new THREE.ShaderMaterial({
+    vertexShader: rainVertShader,
+    fragmentShader: rainFragShader,
+    uniforms: {
+      ...{
+        uSpeed: {
+          value: speed,
+        },
+        uHeightRange: {
+          value: 20,
+        },
+        uNormalTexture: {
+          value: rNormalTex,
+        },
+        uBgRt: {
+          value: null,
+        },
+        uRefraction: {
+          value: 0.1,
+        },
+        uBaseBrightness: {
+          value: 0.1,
+        },
+      },
+    },
+  });
 };
 const animate = () => {
   requestAnimationFrame(animate);
