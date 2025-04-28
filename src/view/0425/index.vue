@@ -8,8 +8,8 @@ import * as THREE from "three";
 // 导入Controls库
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { RectAreaLightHelper } from "three/examples/jsm/helpers/RectAreaLightHelper";
-import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
+import { FontLoader } from "three/addons/loaders/FontLoader.js";
 // 导入Reflector
 import { Reflector } from "three/addons/objects/Reflector.js";
 // 导入着色器
@@ -34,11 +34,7 @@ const init = () => {
   THREE.ColorManagement.enabled = false;
   // 创建场景
   scene = new THREE.Scene();
-  // 添加颜色
-  scene.background = new THREE.Color("#ffffff");
-  // 添加坐标轴辅助器
-  const axesHelper = new THREE.AxesHelper(5);
-  scene.add(axesHelper);
+
   // 创建相机
   camera = new THREE.PerspectiveCamera(
     75,
@@ -60,14 +56,13 @@ const init = () => {
   canvasRef.value.appendChild(renderer.domElement);
   // 创建控制器
   controls = new OrbitControls(camera, renderer.domElement);
-  controls.target = lookAt;
 
   // 添加灯光
-  const pointLight1 = new THREE.PointLight(config.color, 0.5, 17, 0.8);
+  const pointLight1 = new THREE.PointLight(config.color, 12, 0, 0.8);
   pointLight1.position.set(0, 2, 0);
   scene.add(pointLight1);
 
-  const pointLight2 = new THREE.PointLight("#81C8F2", 2, 30);
+  const pointLight2 = new THREE.PointLight("#81C8F2", 12, 0, 0.8);
   pointLight2.position.set(0, 25, 0);
   scene.add(pointLight2);
 
@@ -106,8 +101,7 @@ const init = () => {
   scene.add(wall2);
   wall2.position.y = 10;
   wall2.position.x = -12;
-  console.log(wall2);
-  
+
   const wall3 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 20, 20), wallMat);
   scene.add(wall3);
   wall3.position.y = 10;
@@ -115,13 +109,13 @@ const init = () => {
 
   // text3D加载器
   const loader = new FontLoader();
-  loader.load("/font/Source_Han_Sans_CN_Regular_Regular.json", (font) => {
+  loader.load("font/helvetiker_regular.typeface.json", function (font) {
     const geometry = new TextGeometry(config.text, {
       font: font,
       size: 3,
-      height: 0.2,
+      depth: 0.2,
       curveSegments: 120,
-      bevelEnabled: false,
+      bevelEnabled: false, //webgl_geometry_text
     });
     geometry.center(); // 居中
     const material = new THREE.MeshBasicMaterial({
@@ -142,45 +136,45 @@ const init = () => {
   fRoughnessTex.wrapS = fRoughnessTex.wrapT = THREE.MirroredRepeatWrapping;
 
   // custom reflector
-  const plan = new THREE.PlaneGeometry(25, 100);
-  // 反射镜面
-  const mirror = new Reflector(plan);
-  mirror.position.z = -25;
-  mirror.rotation.x = -Math.PI / 2;
-  mirror.material.uniforms = {
-    ...mirror.material.uniforms,
-    ...{
-      uNormalTexture: {
-        value: fNormalTex,
-      },
-      uOpacityTexture: {
-        value: fOpacityTex,
-      },
-      uRoughnessTexture: {
-        value: fRoughnessTex,
-      },
-      uRainCount: {
-        value: count,
-      },
-      uTexScale: {
-        value: new THREE.Vector2(1, 4),
-      },
-      uTexOffset: {
-        value: new THREE.Vector2(1, -0.5),
-      },
-      uDistortionAmount: {
-        value: 0.25,
-      },
-      uBlurStrength: {
-        value: 8,
-      },
-      uMipmapTextureSize: {
-        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
-      },
-    },
-  };
-  mirror.material.vertexShader = vertexShader;
-  mirror.material.fragmentShader = fragmentShader;
+  // const plan = new THREE.PlaneGeometry(25, 100);
+  // // 反射镜面
+  // const mirror = new Reflector(plan);
+  // mirror.position.z = -25;
+  // mirror.rotation.x = -Math.PI / 2;
+  // mirror.material.uniforms = {
+  //   ...mirror.material.uniforms,
+  //   ...{
+  //     uNormalTexture: {
+  //       value: fNormalTex,
+  //     },
+  //     uOpacityTexture: {
+  //       value: fOpacityTex,
+  //     },
+  //     uRoughnessTexture: {
+  //       value: fRoughnessTex,
+  //     },
+  //     uRainCount: {
+  //       value: count,
+  //     },
+  //     uTexScale: {
+  //       value: new THREE.Vector2(1, 4),
+  //     },
+  //     uTexOffset: {
+  //       value: new THREE.Vector2(1, -0.5),
+  //     },
+  //     uDistortionAmount: {
+  //       value: 0.25,
+  //     },
+  //     uBlurStrength: {
+  //       value: 8,
+  //     },
+  //     uMipmapTextureSize: {
+  //       value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+  //     },
+  //   },
+  // };
+  // mirror.material.vertexShader = vertexShader;
+  // mirror.material.fragmentShader = fragmentShader;
 };
 const animate = () => {
   requestAnimationFrame(animate);
