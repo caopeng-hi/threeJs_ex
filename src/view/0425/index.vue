@@ -136,45 +136,45 @@ const init = () => {
   fRoughnessTex.wrapS = fRoughnessTex.wrapT = THREE.MirroredRepeatWrapping;
 
   // custom reflector
-  // const plan = new THREE.PlaneGeometry(25, 100);
+  const plan = new THREE.PlaneGeometry(25, 100);
   // // 反射镜面
-  // const mirror = new Reflector(plan);
-  // mirror.position.z = -25;
-  // mirror.rotation.x = -Math.PI / 2;
-  // mirror.material.uniforms = {
-  //   ...mirror.material.uniforms,
-  //   ...{
-  //     uNormalTexture: {
-  //       value: fNormalTex,
-  //     },
-  //     uOpacityTexture: {
-  //       value: fOpacityTex,
-  //     },
-  //     uRoughnessTexture: {
-  //       value: fRoughnessTex,
-  //     },
-  //     uRainCount: {
-  //       value: count,
-  //     },
-  //     uTexScale: {
-  //       value: new THREE.Vector2(1, 4),
-  //     },
-  //     uTexOffset: {
-  //       value: new THREE.Vector2(1, -0.5),
-  //     },
-  //     uDistortionAmount: {
-  //       value: 0.25,
-  //     },
-  //     uBlurStrength: {
-  //       value: 8,
-  //     },
-  //     uMipmapTextureSize: {
-  //       value: new THREE.Vector2(window.innerWidth, window.innerHeight),
-  //     },
-  //   },
-  // };
-  // mirror.material.vertexShader = vertexShader;
-  // mirror.material.fragmentShader = fragmentShader;
+  const mirror = new Reflector(plan);
+  mirror.position.z = -25;
+  mirror.rotation.x = -Math.PI / 2;
+  mirror.material.uniforms = {
+    ...mirror.material.uniforms,
+    ...{
+      uNormalTexture: {
+        value: fNormalTex,
+      },
+      uOpacityTexture: {
+        value: fOpacityTex,
+      },
+      uRoughnessTexture: {
+        value: fRoughnessTex,
+      },
+      uRainCount: {
+        value: config.count,
+      },
+      uTexScale: {
+        value: new THREE.Vector2(1, 4),
+      },
+      uTexOffset: {
+        value: new THREE.Vector2(1, -0.5),
+      },
+      uDistortionAmount: {
+        value: 0.25,
+      },
+      uBlurStrength: {
+        value: 8,
+      },
+      uMipmapTextureSize: {
+        value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+      },
+    },
+  };
+  mirror.material.vertexShader = vertexShader;
+  mirror.material.fragmentShader = fragmentShader;
 };
 const animate = () => {
   requestAnimationFrame(animate);
