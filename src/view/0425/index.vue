@@ -106,7 +106,8 @@ const init = () => {
   scene.add(wall2);
   wall2.position.y = 10;
   wall2.position.x = -12;
-
+  console.log(wall2);
+  
   const wall3 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 20, 20), wallMat);
   scene.add(wall3);
   wall3.position.y = 10;
