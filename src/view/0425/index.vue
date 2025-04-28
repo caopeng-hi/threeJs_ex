@@ -175,6 +175,7 @@ const init = () => {
   };
   mirror.material.vertexShader = vertexShader;
   mirror.material.fragmentShader = fragmentShader;
+  scene.add(mirror);
 };
 const animate = () => {
   requestAnimationFrame(animate);
