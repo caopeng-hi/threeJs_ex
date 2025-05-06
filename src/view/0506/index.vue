@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-05-06 11:43:36
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-05-06 17:44:59
+ * @LastEditTime: 2025-05-06 17:42:09
  * @Description: 请填写简介
 -->
 <template>
@@ -21,7 +21,63 @@ import anime from "animejs";
 import { createNoise3D, createNoise4D } from "simplex-noise";
 const canvasRef = ref(null); // 定义一个ref对象来引用canvas元素
 let scene, camera, renderer, controls, clock; // 定义场景、相机、渲染器和控制器变量
+let composer, bloomPass;
+let particlesGeometry, particlesMaterial, particleSystem;
+let currentPositions, sourcePositions, targetPositions, swarmPositions;
+let particleSizes, particleOpacities, particleEffectStrengths;
+let noise3D, noise4D;
 
+let morphTimeline = null;
+let isInitialized = false;
+let isMorphing = false;
+const CONFIG = {
+  particleCount: 15000,
+  shapeSize: 14,
+  swarmDistanceFactor: 1.5,
+  swirlFactor: 4.0,
+  noiseFrequency: 0.1,
+  noiseTimeScale: 0.04,
+  noiseMaxStrength: 2.8,
+  colorScheme: "fire",
+  morphDuration: 4000,
+  particleSizeRange: [0.08, 0.25],
+  starCount: 18000,
+  bloomStrength: 1.3,
+  bloomRadius: 0.5,
+  bloomThreshold: 0.05,
+  idleFlowStrength: 0.25,
+  idleFlowSpeed: 0.08,
+  idleRotationSpeed: 0.02,
+  morphSizeFactor: 0.5,
+  morphBrightnessFactor: 0.6,
+};
+const SHAPES = [
+  { name: "Sphere", generator: generateSphere },
+  { name: "Cube", generator: generateCube },
+  { name: "Pyramid", generator: generatePyramid },
+  { name: "Torus", generator: generateTorus },
+  { name: "Galaxy", generator: generateGalaxy },
+  { name: "Wave", generator: generateWave },
+];
+let currentShapeIndex = 0;
+
+const morphState = { progress: 0.0 };
+
+const COLOR_SCHEMES = {
+  fire: { startHue: 0, endHue: 45, saturation: 0.95, lightness: 0.6 },
+  neon: { startHue: 300, endHue: 180, saturation: 1.0, lightness: 0.65 },
+  nature: { startHue: 90, endHue: 160, saturation: 0.85, lightness: 0.55 },
+  rainbow: { startHue: 0, endHue: 360, saturation: 0.9, lightness: 0.6 },
+};
+const tempVec = new THREE.Vector3();
+const sourceVec = new THREE.Vector3();
+const targetVec = new THREE.Vector3();
+const swarmVec = new THREE.Vector3();
+const noiseOffset = new THREE.Vector3();
+const flowVec = new THREE.Vector3();
+const bezPos = new THREE.Vector3();
+const swirlAxis = new THREE.Vector3();
+const currentVec = new THREE.Vector3();
 onMounted(() => {
   init();
   animate();
@@ -51,6 +107,161 @@ function animate() {
   requestAnimationFrame(animate); // 循环调用animate函数
   renderer.render(scene, camera); // 渲染场景
   controls.update(); // 更新控制器
+}
+function generateSphere(count, size) {
+  const points = new Float32Array(count * 3);
+  const phi = Math.PI * (Math.sqrt(5) - 1);
+  for (let i = 0; i < count; i++) {
+    const y = 1 - (i / (count - 1)) * 2;
+    const radius = Math.sqrt(1 - y * y);
+    const theta = phi * i;
+    const x = Math.cos(theta) * radius;
+    const z = Math.sin(theta) * radius;
+    points[i * 3] = x * size;
+    points[i * 3 + 1] = y * size;
+    points[i * 3 + 2] = z * size;
+  }
+  return points;
+}
+function generateCube(count, size) {
+  const points = new Float32Array(count * 3);
+  const halfSize = size / 2;
+  for (let i = 0; i < count; i++) {
+    const face = Math.floor(Math.random() * 6);
+    const u = Math.random() * size - halfSize;
+    const v = Math.random() * size - halfSize;
+    switch (face) {
+      case 0:
+        points.set([halfSize, u, v], i * 3);
+        break;
+      case 1:
+        points.set([-halfSize, u, v], i * 3);
+        break;
+      case 2:
+        points.set([u, halfSize, v], i * 3);
+        break;
+      case 3:
+        points.set([u, -halfSize, v], i * 3);
+        break;
+      case 4:
+        points.set([u, v, halfSize], i * 3);
+        break;
+      case 5:
+        points.set([u, v, -halfSize], i * 3);
+        break;
+    }
+  }
+  return points;
+}
+function generatePyramid(count, size) {
+  const points = new Float32Array(count * 3);
+  const halfBase = size / 2;
+  const height = size * 1.2;
+  const apex = new THREE.Vector3(0, height / 2, 0);
+  const baseVertices = [
+    new THREE.Vector3(-halfBase, -height / 2, -halfBase),
+    new THREE.Vector3(halfBase, -height / 2, -halfBase),
+    new THREE.Vector3(halfBase, -height / 2, halfBase),
+    new THREE.Vector3(-halfBase, -height / 2, halfBase),
+  ];
+  const baseArea = size * size;
+  const sideFaceHeight = Math.sqrt(Math.pow(height, 2) + Math.pow(halfBase, 2));
+  const sideFaceArea = 0.5 * size * sideFaceHeight;
+  const totalArea = baseArea + 4 * sideFaceArea;
+  const baseWeight = baseArea / totalArea;
+  const sideWeight = sideFaceArea / totalArea;
+  for (let i = 0; i < count; i++) {
+    const r = Math.random();
+    let p = new THREE.Vector3();
+    let u, v;
+    if (r < baseWeight) {
+      u = Math.random();
+      v = Math.random();
+      p.lerpVectors(baseVertices[0], baseVertices[1], u);
+      const p2 = new THREE.Vector3().lerpVectors(
+        baseVertices[3],
+        baseVertices[2],
+        u
+      );
+      p.lerp(p2, v);
+    } else {
+      const faceIndex = Math.floor((r - baseWeight) / sideWeight);
+      const v1 = baseVertices[faceIndex];
+      const v2 = baseVertices[(faceIndex + 1) % 4];
+      u = Math.random();
+      v = Math.random();
+      if (u + v > 1) {
+        u = 1 - u;
+        v = 1 - v;
+      }
+      p.addVectors(v1, tempVec.subVectors(v2, v1).multiplyScalar(u));
+      p.add(tempVec.subVectors(apex, v1).multiplyScalar(v));
+    }
+    points.set([p.x, p.y, p.z], i * 3);
+  }
+  return points;
+}
+function generateTorus(count, size) {
+  const points = new Float32Array(count * 3);
+  const R = size * 0.7;
+  const r = size * 0.3;
+  for (let i = 0; i < count; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI * 2;
+    const x = (R + r * Math.cos(phi)) * Math.cos(theta);
+    const y = r * Math.sin(phi);
+    const z = (R + r * Math.cos(phi)) * Math.sin(theta);
+    points[i * 3] = x;
+    points[i * 3 + 1] = y;
+    points[i * 3 + 2] = z;
+  }
+  return points;
+}
+function generateGalaxy(count, size) {
+  const points = new Float32Array(count * 3);
+  const arms = 4;
+  const armWidth = 0.6;
+  const bulgeFactor = 0.3;
+  for (let i = 0; i < count; i++) {
+    const t = Math.pow(Math.random(), 1.5);
+    const radius = t * size;
+    const armIndex = Math.floor(Math.random() * arms);
+    const armOffset = (armIndex / arms) * Math.PI * 2;
+    const rotationAmount = (radius / size) * 6;
+    const angle = armOffset + rotationAmount;
+    const spread = (Math.random() - 0.5) * armWidth * (1 - radius / size);
+    const theta = angle + spread;
+    const x = radius * Math.cos(theta);
+    const z = radius * Math.sin(theta);
+    const y =
+      (Math.random() - 0.5) * size * 0.1 * (1 - (radius / size) * bulgeFactor);
+    points[i * 3] = x;
+    points[i * 3 + 1] = y;
+    points[i * 3 + 2] = z;
+  }
+  return points;
+}
+function generateWave(count, size) {
+  const points = new Float32Array(count * 3);
+  const waveScale = size * 0.4;
+  const frequency = 3;
+  for (let i = 0; i < count; i++) {
+    const u = Math.random() * 2 - 1;
+    const v = Math.random() * 2 - 1;
+    const x = u * size;
+    const z = v * size;
+    const dist = Math.sqrt(u * u + v * v);
+    const angle = Math.atan2(v, u);
+    const y =
+      Math.sin(dist * Math.PI * frequency) *
+      Math.cos(angle * 2) *
+      waveScale *
+      (1 - dist);
+    points[i * 3] = x;
+    points[i * 3 + 1] = y;
+    points[i * 3 + 2] = z;
+  }
+  return points;
 }
 </script>
 
