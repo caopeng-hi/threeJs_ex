@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-05-06 11:43:36
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-05-06 17:51:36
+ * @LastEditTime: 2025-05-06 17:54:14
  * @Description: 请填写简介
 -->
 <template>
@@ -291,6 +291,21 @@ function init() {
 }
 function animate() {
   requestAnimationFrame(animate); // 循环调用animate函数
+
+  const elapsedTime = clock.getElapsedTime();
+  const deltaTime = clock.getDelta();
+  const positions = particlesGeometry.attributes.position.array;
+  const effectStrengths = particlesGeometry.attributes.aEffectStrength.array;
+  if (isMorphing) {
+    updateMorphAnimation(positions, effectStrengths, elapsedTime, deltaTime);
+  } else {
+    updateIdleAnimation(positions, effectStrengths, elapsedTime, deltaTime);
+  }
+  particlesGeometry.attributes.position.needsUpdate = true;
+  if (isMorphing || particlesGeometry.attributes.aEffectStrength.needsUpdate) {
+    particlesGeometry.attributes.aEffectStrength.needsUpdate = true;
+  }
+  composer.render(deltaTime);
   renderer.render(scene, camera); // 渲染场景
   controls.update(); // 更新控制器
 }
@@ -471,6 +486,128 @@ function createStarTexture() {
   context.fillStyle = gradient;
   context.fillRect(0, 0, size, size);
   return new THREE.CanvasTexture(canvas);
+}
+function updateMorphAnimation(
+  positions,
+  effectStrengths,
+  elapsedTime,
+  deltaTime
+) {
+  const t = morphState.progress;
+  const targets = targetPositions[currentShapeIndex];
+  const effectStrength = Math.sin(t * Math.PI);
+  const currentSwirl = effectStrength * CONFIG.swirlFactor * deltaTime * 50;
+  const currentNoise = effectStrength * CONFIG.noiseMaxStrength;
+
+  for (let i = 0; i < CONFIG.particleCount; i++) {
+    const i3 = i * 3;
+    sourceVec.fromArray(sourcePositions, i3);
+    swarmVec.fromArray(swarmPositions, i3);
+    targetVec.fromArray(targets, i3);
+
+    const t_inv = 1.0 - t;
+    const t_inv_sq = t_inv * t_inv;
+    const t_sq = t * t;
+    bezPos.copy(sourceVec).multiplyScalar(t_inv_sq);
+    bezPos.addScaledVector(swarmVec, 2.0 * t_inv * t);
+    bezPos.addScaledVector(targetVec, t_sq);
+
+    if (currentSwirl > 0.01) {
+      tempVec.subVectors(bezPos, sourceVec);
+      swirlAxis
+        .set(
+          noise3D(i * 0.02, elapsedTime * 0.1, 0),
+          noise3D(0, i * 0.02, elapsedTime * 0.1 + 5),
+          noise3D(elapsedTime * 0.1 + 10, 0, i * 0.02)
+        )
+        .normalize();
+      tempVec.applyAxisAngle(
+        swirlAxis,
+        currentSwirl * (0.5 + Math.random() * 0.5)
+      );
+      bezPos.copy(sourceVec).add(tempVec);
+    }
+
+    if (currentNoise > 0.01) {
+      const noiseTime = elapsedTime * CONFIG.noiseTimeScale;
+      noiseOffset.set(
+        noise4D(
+          bezPos.x * CONFIG.noiseFrequency,
+          bezPos.y * CONFIG.noiseFrequency,
+          bezPos.z * CONFIG.noiseFrequency,
+          noiseTime
+        ),
+        noise4D(
+          bezPos.x * CONFIG.noiseFrequency + 100,
+          bezPos.y * CONFIG.noiseFrequency + 100,
+          bezPos.z * CONFIG.noiseFrequency + 100,
+          noiseTime
+        ),
+        noise4D(
+          bezPos.x * CONFIG.noiseFrequency + 200,
+          bezPos.y * CONFIG.noiseFrequency + 200,
+          bezPos.z * CONFIG.noiseFrequency + 200,
+          noiseTime
+        )
+      );
+      bezPos.addScaledVector(noiseOffset, currentNoise);
+    }
+
+    positions[i3] = bezPos.x;
+    positions[i3 + 1] = bezPos.y;
+    positions[i3 + 2] = bezPos.z;
+
+    effectStrengths[i] = effectStrength;
+  }
+  particlesGeometry.attributes.aEffectStrength.needsUpdate = true;
+}
+
+function updateIdleAnimation(
+  positions,
+  effectStrengths,
+  elapsedTime,
+  deltaTime
+) {
+  const breathScale = 1.0 + Math.sin(elapsedTime * 0.5) * 0.015;
+  const timeScaled = elapsedTime * CONFIG.idleFlowSpeed;
+  const freq = 0.1;
+
+  let needsEffectStrengthReset = false;
+
+  for (let i = 0; i < CONFIG.particleCount; i++) {
+    const i3 = i * 3;
+    sourceVec.fromArray(sourcePositions, i3);
+    tempVec.copy(sourceVec).multiplyScalar(breathScale);
+    flowVec.set(
+      noise4D(tempVec.x * freq, tempVec.y * freq, tempVec.z * freq, timeScaled),
+      noise4D(
+        tempVec.x * freq + 10,
+        tempVec.y * freq + 10,
+        tempVec.z * freq + 10,
+        timeScaled
+      ),
+      noise4D(
+        tempVec.x * freq + 20,
+        tempVec.y * freq + 20,
+        tempVec.z * freq + 20,
+        timeScaled
+      )
+    );
+    tempVec.addScaledVector(flowVec, CONFIG.idleFlowStrength);
+    currentVec.fromArray(positions, i3);
+    currentVec.lerp(tempVec, 0.05);
+    positions[i3] = currentVec.x;
+    positions[i3 + 1] = currentVec.y;
+    positions[i3 + 2] = currentVec.z;
+
+    if (effectStrengths[i] !== 0.0) {
+      effectStrengths[i] = 0.0;
+      needsEffectStrengthReset = true;
+    }
+  }
+  if (needsEffectStrengthReset) {
+    particlesGeometry.attributes.aEffectStrength.needsUpdate = true;
+  }
 }
 </script>
 
