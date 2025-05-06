@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-05-06 11:43:36
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-05-06 17:42:09
+ * @LastEditTime: 2025-05-06 17:47:19
  * @Description: 请填写简介
 -->
 <template>
@@ -86,6 +86,7 @@ onMounted(() => {
 function init() {
   // 创建场景
   scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x000308, 0.03);
   // 创建相机
   camera = new THREE.PerspectiveCamera(
     75,
@@ -96,12 +97,37 @@ function init() {
   // 设置相机位置
   camera.position.set(0, 0, 5);
   // 创建渲染器
-  renderer = new THREE.WebGLRenderer({ antialias: true }); // 开启抗锯齿
+  renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+    powerPreference: "high-performance",
+  }); // 开启抗锯齿
   renderer.setSize(window.innerWidth, window.innerHeight); // 设置渲染器大小
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 设置像素比
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
   // 将渲染器添加到canvas元素中
   canvasRef.value.appendChild(renderer.domElement);
   // 创建控制器
   controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.minDistance = 5;
+  controls.maxDistance = 80;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.3;
+
+  scene.add(new THREE.AmbientLight(0x404060));
+  const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.5);
+  dirLight1.position.set(15, 20, 10);
+  scene.add(dirLight1);
+  const dirLight2 = new THREE.DirectionalLight(0x88aaff, 0.9);
+  dirLight2.position.set(-15, -10, -15);
+  scene.add(dirLight2);
+
+  clock = new THREE.Clock();
+  noise3D = createNoise3D(() => Math.random());
+  noise4D = createNoise4D(() => Math.random());
 }
 function animate() {
   requestAnimationFrame(animate); // 循环调用animate函数
