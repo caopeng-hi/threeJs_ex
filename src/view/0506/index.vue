@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-05-06 11:43:36
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-05-06 17:47:19
+ * @LastEditTime: 2025-05-06 17:48:36
  * @Description: 请填写简介
 -->
 <template>
@@ -128,6 +128,71 @@ function init() {
   clock = new THREE.Clock();
   noise3D = createNoise3D(() => Math.random());
   noise4D = createNoise4D(() => Math.random());
+
+  const starVertices = [];
+  const starSizes = [];
+  const starColors = [];
+  const starGeometry = new THREE.BufferGeometry();
+
+  for (let i = 0; i < CONFIG.starCount; i++) {
+    tempVec.set(
+      THREE.MathUtils.randFloatSpread(400),
+      THREE.MathUtils.randFloatSpread(400),
+      THREE.MathUtils.randFloatSpread(400)
+    );
+    if (tempVec.length() < 100) tempVec.setLength(100 + Math.random() * 300);
+    starVertices.push(tempVec.x, tempVec.y, tempVec.z);
+    starSizes.push(Math.random() * 0.15 + 0.05);
+    const color = new THREE.Color();
+    if (Math.random() < 0.1) {
+      color.setHSL(Math.random(), 0.7, 0.65);
+    } else {
+      color.setHSL(0.6, Math.random() * 0.1, 0.8 + Math.random() * 0.2);
+    }
+    starColors.push(color.r, color.g, color.b);
+  }
+  starGeometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(starVertices, 3)
+  );
+  starGeometry.setAttribute(
+    "color",
+    new THREE.Float32BufferAttribute(starColors, 3)
+  );
+  starGeometry.setAttribute(
+    "size",
+    new THREE.Float32BufferAttribute(starSizes, 1)
+  );
+
+  const starMaterial = new THREE.ShaderMaterial({
+    uniforms: { pointTexture: { value: createStarTexture() } },
+    vertexShader: `
+                      attribute float size; varying vec3 vColor; varying float vSize;
+                      void main() {
+                           vColor = color; vSize = size; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                           gl_PointSize = size * (400.0 / -mvPosition.z); gl_Position = projectionMatrix * mvPosition;
+                      }`,
+    fragmentShader: `
+                      uniform sampler2D pointTexture; varying vec3 vColor; varying float vSize;
+                      void main() {
+                           float alpha = texture2D(pointTexture, gl_PointCoord).a; if (alpha < 0.1) discard;
+                           gl_FragColor = vec4(vColor, alpha * 0.9);
+                      }`,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    transparent: true,
+    vertexColors: true,
+  });
+  scene.add(new THREE.Points(starGeometry, starMaterial));
+  composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    CONFIG.bloomStrength,
+    CONFIG.bloomRadius,
+    CONFIG.bloomThreshold
+  );
+  composer.addPass(bloomPass);
 }
 function animate() {
   requestAnimationFrame(animate); // 循环调用animate函数
