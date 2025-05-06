@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-05-06 11:43:36
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-05-06 17:48:36
+ * @LastEditTime: 2025-05-06 17:51:36
  * @Description: 请填写简介
 -->
 <template>
@@ -184,6 +184,101 @@ function init() {
     vertexColors: true,
   });
   scene.add(new THREE.Points(starGeometry, starMaterial));
+
+  targetPositions = SHAPES.map((shape) =>
+    shape.generator(CONFIG.particleCount, CONFIG.shapeSize)
+  );
+  particlesGeometry = new THREE.BufferGeometry();
+
+  currentPositions = new Float32Array(targetPositions[0]);
+  sourcePositions = new Float32Array(targetPositions[0]);
+  swarmPositions = new Float32Array(CONFIG.particleCount * 3);
+  particlesGeometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(currentPositions, 3)
+  );
+
+  particleSizes = new Float32Array(CONFIG.particleCount);
+  particleOpacities = new Float32Array(CONFIG.particleCount);
+  particleEffectStrengths = new Float32Array(CONFIG.particleCount);
+  for (let i = 0; i < CONFIG.particleCount; i++) {
+    particleSizes[i] = THREE.MathUtils.randFloat(
+      CONFIG.particleSizeRange[0],
+      CONFIG.particleSizeRange[1]
+    );
+    particleOpacities[i] = 1.0;
+    particleEffectStrengths[i] = 0.0;
+  }
+  particlesGeometry.setAttribute(
+    "size",
+    new THREE.BufferAttribute(particleSizes, 1)
+  );
+  particlesGeometry.setAttribute(
+    "opacity",
+    new THREE.BufferAttribute(particleOpacities, 1)
+  );
+  particlesGeometry.setAttribute(
+    "aEffectStrength",
+    new THREE.BufferAttribute(particleEffectStrengths, 1)
+  );
+
+  const colors = new Float32Array(CONFIG.particleCount * 3);
+  updateColorArray(colors, currentPositions);
+  particlesGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+  particlesMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      pointTexture: { value: createStarTexture() },
+    },
+    vertexShader: `
+                      attribute float size;
+                      attribute float opacity;
+                      attribute float aEffectStrength;
+                      varying vec3 vColor;
+                      varying float vOpacity;
+                      varying float vEffectStrength;
+
+                      void main() {
+                           vColor = color;
+                           vOpacity = opacity;
+                           vEffectStrength = aEffectStrength;
+
+                           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+
+                           float sizeScale = 1.0 - vEffectStrength * ${CONFIG.morphSizeFactor.toFixed(
+                             2
+                           )};
+                           gl_PointSize = size * sizeScale * (400.0 / -mvPosition.z);
+
+                           gl_Position = projectionMatrix * mvPosition;
+                      }
+                 `,
+    fragmentShader: `
+                      uniform sampler2D pointTexture;
+                      varying vec3 vColor;
+                      varying float vOpacity;
+                      varying float vEffectStrength;
+
+                      void main() {
+                           float alpha = texture2D(pointTexture, gl_PointCoord).a;
+                           if (alpha < 0.05) discard;
+
+                           vec3 finalColor = vColor * (1.0 + vEffectStrength * ${CONFIG.morphBrightnessFactor.toFixed(
+                             2
+                           )});
+
+                           gl_FragColor = vec4(finalColor, alpha * vOpacity);
+                      }
+                 `,
+    blending: THREE.AdditiveBlending,
+    depthTest: true,
+    depthWrite: false,
+    transparent: true,
+    vertexColors: true,
+  });
+
+  particleSystem = new THREE.Points(particlesGeometry, particlesMaterial);
+  scene.add(particleSystem);
   composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
   bloomPass = new UnrealBloomPass(
@@ -353,6 +448,29 @@ function generateWave(count, size) {
     points[i * 3 + 2] = z;
   }
   return points;
+}
+
+function createStarTexture() {
+  const size = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const context = canvas.getContext("2d");
+  const gradient = context.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2
+  );
+  gradient.addColorStop(0, "rgba(255,255,255,1)");
+  gradient.addColorStop(0.2, "rgba(255,255,255,0.8)");
+  gradient.addColorStop(0.5, "rgba(255,255,255,0.3)");
+  gradient.addColorStop(1, "rgba(255,255,255,0)");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, size, size);
+  return new THREE.CanvasTexture(canvas);
 }
 </script>
 
