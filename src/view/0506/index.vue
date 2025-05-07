@@ -2,11 +2,19 @@
  * @Author: caopeng
  * @Date: 2025-05-06 11:43:36
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-05-07 10:36:33
+ * @LastEditTime: 2025-05-07 10:46:55
  * @Description: 请填写简介
 -->
 <template>
-  <div @click="onCanvasClick" class="canvasRef" ref="canvasRef"></div>
+  <div class="canvas-box">
+    <div @click="onCanvasClick" class="canvasRef" ref="canvasRef"></div>
+    <div class="sel-color">
+      <button @click="changeColor('fire')">fire</button>
+      <button @click="changeColor('neon')">neon</button>
+      <button @click="changeColor('nature')">nature</button>
+      <button @click="changeColor('rainbow')">rainbow</button>
+    </div>
+  </div>
 </template>
 <script setup>
 import { onMounted, ref } from "vue";
@@ -714,9 +722,25 @@ function triggerMorph() {
     },
   });
 }
-function onCanvasClick(event) {
+function onCanvasClick() {
   triggerMorph();
 }
+const changeColor = (color) => {
+  CONFIG.colorScheme = color;
+  updateColors();
+};
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.canvas-box {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  .sel-color {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 999;
+  }
+}
+</style>
