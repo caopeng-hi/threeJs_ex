@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-05-06 11:43:36
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-05-06 17:54:14
+ * @LastEditTime: 2025-05-07 10:21:48
  * @Description: 请填写简介
 -->
 <template>
@@ -17,7 +17,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import anime from "animejs";
+import * as anime from "animejs";
 import { createNoise3D, createNoise4D } from "simplex-noise";
 const canvasRef = ref(null); // 定义一个ref对象来引用canvas元素
 let scene, camera, renderer, controls, clock; // 定义场景、相机、渲染器和控制器变量
@@ -167,15 +167,22 @@ function init() {
   const starMaterial = new THREE.ShaderMaterial({
     uniforms: { pointTexture: { value: createStarTexture() } },
     vertexShader: `
-                      attribute float size; varying vec3 vColor; varying float vSize;
+                      attribute float size;
+                      varying vec3 vColor;
+                      varying float vSize;
                       void main() {
-                           vColor = color; vSize = size; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                           gl_PointSize = size * (400.0 / -mvPosition.z); gl_Position = projectionMatrix * mvPosition;
+                           vColor = color; vSize = size;
+                           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                           gl_PointSize = size * (400.0 / -mvPosition.z);
+                           gl_Position = projectionMatrix * mvPosition;
                       }`,
     fragmentShader: `
-                      uniform sampler2D pointTexture; varying vec3 vColor; varying float vSize;
+                      uniform sampler2D pointTexture;
+                      varying vec3 vColor;
+                      varying float vSize;
                       void main() {
-                           float alpha = texture2D(pointTexture, gl_PointCoord).a; if (alpha < 0.1) discard;
+                           float alpha = texture2D(pointTexture, gl_PointCoord).a;
+                           if (alpha < 0.1) discard;
                            gl_FragColor = vec4(vColor, alpha * 0.9);
                       }`,
     blending: THREE.AdditiveBlending,
@@ -607,6 +614,46 @@ function updateIdleAnimation(
   }
   if (needsEffectStrengthReset) {
     particlesGeometry.attributes.aEffectStrength.needsUpdate = true;
+  }
+}
+
+function updateColorArray(colors, positionsArray) {
+  const colorScheme = COLOR_SCHEMES[CONFIG.colorScheme];
+  const center = new THREE.Vector3(0, 0, 0);
+  const maxRadius = CONFIG.shapeSize * 1.1;
+  for (let i = 0; i < CONFIG.particleCount; i++) {
+    const i3 = i * 3;
+    tempVec.fromArray(positionsArray, i3);
+    const dist = tempVec.distanceTo(center);
+    let hue;
+    if (CONFIG.colorScheme === "rainbow") {
+      const normX = (tempVec.x / maxRadius + 1) / 2;
+      const normY = (tempVec.y / maxRadius + 1) / 2;
+      const normZ = (tempVec.z / maxRadius + 1) / 2;
+      hue = (normX * 120 + normY * 120 + normZ * 120) % 360;
+    } else {
+      hue = THREE.MathUtils.mapLinear(
+        dist,
+        0,
+        maxRadius,
+        colorScheme.startHue,
+        colorScheme.endHue
+      );
+    }
+    const noiseValue =
+      (noise3D(tempVec.x * 0.2, tempVec.y * 0.2, tempVec.z * 0.2) + 1) * 0.5;
+    const saturation = THREE.MathUtils.clamp(
+      colorScheme.saturation * (0.9 + noiseValue * 0.2),
+      0,
+      1
+    );
+    const lightness = THREE.MathUtils.clamp(
+      colorScheme.lightness * (0.85 + noiseValue * 0.3),
+      0.1,
+      0.9
+    );
+    const color = new THREE.Color().setHSL(hue / 360, saturation, lightness);
+    color.toArray(colors, i3);
   }
 }
 </script>
