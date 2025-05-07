@@ -2,11 +2,11 @@
  * @Author: caopeng
  * @Date: 2025-05-06 11:43:36
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-05-07 10:21:48
+ * @LastEditTime: 2025-05-07 10:36:33
  * @Description: 请填写简介
 -->
 <template>
-  <div class="canvasRef" ref="canvasRef"></div>
+  <div @click="onCanvasClick" class="canvasRef" ref="canvasRef"></div>
 </template>
 <script setup>
 import { onMounted, ref } from "vue";
@@ -17,7 +17,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import * as anime from "animejs";
+import anime from "animejs/lib/anime.es.js";
 import { createNoise3D, createNoise4D } from "simplex-noise";
 const canvasRef = ref(null); // 定义一个ref对象来引用canvas元素
 let scene, camera, renderer, controls, clock; // 定义场景、相机、渲染器和控制器变量
@@ -86,16 +86,17 @@ onMounted(() => {
 function init() {
   // 创建场景
   scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
   scene.fog = new THREE.FogExp2(0x000308, 0.03);
   // 创建相机
   camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
     0.1,
-    1000
+    10000
   );
   // 设置相机位置
-  camera.position.set(0, 0, 5);
+  camera.position.set(0, 20, 30);
   // 创建渲染器
   renderer = new THREE.WebGLRenderer({
     antialias: true,
@@ -655,6 +656,66 @@ function updateColorArray(colors, positionsArray) {
     const color = new THREE.Color().setHSL(hue / 360, saturation, lightness);
     color.toArray(colors, i3);
   }
+}
+function updateColors() {
+  const colors = particlesGeometry.attributes.color.array;
+  updateColorArray(colors, particlesGeometry.attributes.position.array);
+  particlesGeometry.attributes.color.needsUpdate = true;
+}
+
+function triggerMorph() {
+  if (isMorphing) return;
+  isMorphing = true;
+  controls.autoRotate = false;
+
+  sourcePositions.set(currentPositions);
+  const nextShapeIndex = (currentShapeIndex + 1) % SHAPES.length;
+  const nextTargetPositions = targetPositions[nextShapeIndex];
+  const centerOffsetAmount = CONFIG.shapeSize * CONFIG.swarmDistanceFactor;
+  for (let i = 0; i < CONFIG.particleCount; i++) {
+    const i3 = i * 3;
+    sourceVec.fromArray(sourcePositions, i3);
+    targetVec.fromArray(nextTargetPositions, i3);
+    swarmVec.lerpVectors(sourceVec, targetVec, 0.5);
+    const offsetDir = tempVec
+      .set(
+        noise3D(i * 0.05, 10, 10),
+        noise3D(20, i * 0.05, 20),
+        noise3D(30, 30, i * 0.05)
+      )
+      .normalize();
+    const distFactor =
+      sourceVec.distanceTo(targetVec) * 0.1 + centerOffsetAmount;
+    swarmVec.addScaledVector(
+      offsetDir,
+      distFactor * (0.5 + Math.random() * 0.8)
+    );
+    swarmPositions[i3] = swarmVec.x;
+    swarmPositions[i3 + 1] = swarmVec.y;
+    swarmPositions[i3 + 2] = swarmVec.z;
+  }
+  currentShapeIndex = nextShapeIndex;
+  morphState.progress = 0;
+  if (morphTimeline) morphTimeline.pause();
+  morphTimeline = anime({
+    targets: morphState,
+    progress: 1,
+    duration: CONFIG.morphDuration,
+    easing: "cubicBezier(0.4, 0.0, 0.2, 1.0)",
+    complete: () => {
+      currentPositions.set(targetPositions[currentShapeIndex]);
+      particlesGeometry.attributes.position.needsUpdate = true;
+      particleEffectStrengths.fill(0.0);
+      particlesGeometry.attributes.aEffectStrength.needsUpdate = true;
+      sourcePositions.set(targetPositions[currentShapeIndex]);
+      updateColors();
+      isMorphing = false;
+      controls.autoRotate = true;
+    },
+  });
+}
+function onCanvasClick(event) {
+  triggerMorph();
 }
 </script>
 
