@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-03-18 16:08:50
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-04-19 21:36:38
+ * @LastEditTime: 2025-05-07 10:59:33
  * @Description: 请填写简介
 -->
 
@@ -110,3 +110,21 @@
   [全息投影] (https://github.com/caopeng-hi/img/blob/main/20250419_212509.gif)
 
 <img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250419_212509.gif" alt="全息投影">
+
+- 0421 五颜六色的虚化效果
+
+  [五颜六色的虚化效果] (https://github.com/caopeng-hi/img/blob/main/20250507_105228.gif)
+
+<img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250507_105228.gif" alt="五颜六色的虚化效果">
+
+- 0425 水波字体
+
+  [水波字体] (https://github.com/caopeng-hi/img/blob/main/20250507_105112.gif)
+
+<img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250507_105112.gif" alt="水波字体">
+
+- 0506 物体变换颜色
+
+  [物体变换颜色] (https://github.com/caopeng-hi/img/blob/main/20250507_104846.gif)
+
+<img width="500" height="300" src="https://github.com/caopeng-hi/img/blob/main/20250507_104846.gif" alt="物体变换颜色">
