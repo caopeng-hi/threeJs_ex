@@ -2,7 +2,7 @@
  * @Author: caopeng
  * @Date: 2025-05-06 11:43:36
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2025-05-07 10:46:55
+ * @LastEditTime: 2025-05-09 09:05:45
  * @Description: 请填写简介
 -->
 <template>
@@ -34,7 +34,7 @@ let particlesGeometry, particlesMaterial, particleSystem;
 let currentPositions, sourcePositions, targetPositions, swarmPositions;
 let particleSizes, particleOpacities, particleEffectStrengths;
 let noise3D, noise4D;
-
+console.log('cp-');
 let morphTimeline = null;
 let isInitialized = false;
 let isMorphing = false;
