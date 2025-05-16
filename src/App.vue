@@ -33,7 +33,8 @@
 //import scene from "./view/0415/index.vue";
 // import scene from "./view/0421/index.vue";
 // import scene from "./view/0425/index.vue";
-import scene from "./view/0506/index.vue";
+// import scene from "./view/0506/index.vue";
+import scene from "./view/0516/index.vue";
 </script>
 
 <style lang="scss" scoped>
