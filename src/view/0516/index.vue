@@ -21,7 +21,9 @@ const tankOffset = { x: 0, y: 6, z: 0 };
 const ringList = ref([]);
 // 存储所有刚体的数组
 const bodies = [];
-
+let buttonLeft;
+let buttonRight;
+let targets = [];
 onMounted(() => {
   init();
   animate();
@@ -53,9 +55,10 @@ const init = () => {
   // 设置相机位置
   camera.position.set(0, 0, 60);
   // 创建渲染器
-  renderer = new THREE.WebGLRenderer();
+  renderer = new THREE.WebGLRenderer({ antialias: true });
   // 设置渲染器大小
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
   // 将渲染器添加到DOM中
   canvasRef.value.appendChild(renderer.domElement);
   controls = new OrbitControls(camera, renderer.domElement);
@@ -128,7 +131,30 @@ const createModel = () => {
   gltfLoader.setDRACOLoader(dracoLoader);
   gltfLoader.load("/model/tank.glb", (gltf) => {
     const { nodes, scene: tank } = extractNodesAndScene(gltf);
-    console.log(nodes, tank);
+    const physicsNode = tank.getObjectByName("Physics");
+    buttonLeft = tank.getObjectByName("Button_Left");
+    buttonRight = tank.getObjectByName("Button_Right");
+    const baseScene = tank.getObjectByName("BaseScene");
+    const targetsNode = tank.getObjectByName("Targets");
+    if (!physicsNode) return;
+    setupPhysicsObjects(physicsNode);
+
+    if (targetsNode && targetsNode.children.length > 0) {
+      targetsNode.children.forEach((child) => {
+        targets.push([child.position.x, child.position.y, child.position.z]);
+      });
+    }
+    console.log(baseScene, "baseScene");
+
+    if (baseScene) {
+      baseScene.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+    }
+    scene.add(tank);
   });
 };
 function extractNodesAndScene(gltf) {
@@ -145,8 +171,8 @@ function extractNodesAndScene(gltf) {
   return { nodes, scene };
 }
 // 遍历场景中的子对象，创建物理刚体
-function setupPhysicsObjects(scene) {
-  scene.children.forEach((obj) => {
+function setupPhysicsObjects(physicsNode) {
+  physicsNode.children.forEach((obj) => {
     // 1. 隐藏原始模型
     obj.visible = false;
 
