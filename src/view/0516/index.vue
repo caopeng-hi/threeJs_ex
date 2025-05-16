@@ -15,6 +15,20 @@ onMounted(() => {
 const init = () => {
   // 创建场景
   scene = new THREE.Scene();
+  // 1. 加载 HDR 环境贴图
+  new THREE.RGBELoader().load("/img/tv_studio_small.hdr", (texture) => {
+    // 2. 设置场景背景
+    scene.background = texture;
+
+    // 3. 设置环境光照
+    scene.environment = texture;
+
+    // 4. 模糊背景（需额外处理）
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.generateMipmaps = false; // 禁用 mipmaps 以简化模糊
+  });
   // 创建相机
   camera = new THREE.PerspectiveCamera(
     35, // fov - 视野角度
@@ -31,6 +45,31 @@ const init = () => {
   // 将渲染器添加到DOM中
   canvasRef.value.appendChild(renderer.domElement);
   controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+  // 1. 创建平行光
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 4);
+  directionalLight.position.set(2, 4, -2);
+
+  // 2. 启用阴影
+  directionalLight.castShadow = true;
+
+  // 3. 设置阴影贴图分辨率
+  directionalLight.shadow.mapSize.width = 512;
+  directionalLight.shadow.mapSize.height = 512;
+
+  // 4. 设置阴影偏移（避免阴影痤疮）
+  directionalLight.shadow.bias = 0.0001;
+
+  // 5. 配置阴影相机（正交相机）
+  directionalLight.shadow.camera.near = 1;
+  directionalLight.shadow.camera.far = 50;
+  directionalLight.shadow.camera.left = -50;
+  directionalLight.shadow.camera.right = 50;
+  directionalLight.shadow.camera.top = 50;
+  directionalLight.shadow.camera.bottom = -50;
+
+  // 6. 将光源添加到场景
+  scene.add(directionalLight);
 };
 const animate = () => {
   // 渲染场景和相机
