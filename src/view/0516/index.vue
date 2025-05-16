@@ -13,7 +13,11 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
-let scene, camera, renderer, controls, world;
+// 导入后期处理
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+let scene, camera, renderer, controls, world, clock, composer, bloomPass;
 const canvasRef = ref(null);
 const ringAmount = 10;
 const tankSize = { x: 14, y: 12, z: 2 };
@@ -24,10 +28,26 @@ const bodies = [];
 let buttonLeft;
 let buttonRight;
 let targets = [];
+const leftUp = ref(false);
+const rightUp = ref(false);
+let bodyCom, meshCom, targetPosition, smoothPosition;
+const leftActuatorPosition = ref([-5, -16, 0]);
+const rightActuatorPosition = ref([5, -16, 0]);
 onMounted(() => {
   init();
   animate();
+  window.addEventListener("keydown", handleKeyDown);
+  window.addEventListener("keyup", handleKeyUp);
 });
+const handleKeyDown = (e) => {
+  if (e.key === "j") rightUp.current = true;
+  if (e.key === "f") leftUp.current = true;
+};
+
+const handleKeyUp = (e) => {
+  if (e.key === "j") rightUp.current = false;
+  if (e.key === "f") leftUp.current = false;
+};
 const init = () => {
   // 创建场景
   scene = new THREE.Scene();
@@ -96,14 +116,36 @@ const init = () => {
   createRings();
   // 加载模型
   createModel();
+
+  Actuator(leftActuatorPosition.value);
+  Actuator(rightActuatorPosition.value);
+  // 2. 创建效果合成器
+  composer = new EffectComposer(renderer);
+
+  // 3. 添加渲染通道（将场景渲染到后处理管道）
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+
+  // 4. 添加泛光效果
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    0.5, // intensity
+    0.9, // luminanceThreshold
+    0.9 // luminanceSmoothing
+  );
+  composer.addPass(bloomPass);
 };
 const animate = () => {
+  clock = new THREE.Clock();
+  const delta = clock.getDelta();
   // 渲染场景和相机
   renderer.render(scene, camera);
-  // 递归调用animate函数
+  composer.render();
   requestAnimationFrame(animate);
   controls.update();
   world.step(1 / 60); // 更新物理世界
+  update(delta, leftUp);
+  update(delta, rightUp);
 };
 const createRings = () => {
   for (let id = 0; id < ringAmount; id += 1) {
@@ -154,7 +196,22 @@ const createModel = () => {
         }
       });
     }
+    const group = new THREE.Group();
+    // 2. 为每个物理刚体添加占位网格（可选，调试用）
+    bodies.forEach((body) => {
+      const boxMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1), // 尺寸需根据刚体调整
+        new THREE.MeshBasicMaterial({ visible: false }) // 不可见
+      );
+
+      // 同步位置和旋转
+      boxMesh.position.copy(body.position);
+      boxMesh.quaternion.copy(body.quaternion);
+
+      group.add(boxMesh);
+    });
     scene.add(tank);
+    scene.add(group); // 添加到场景中
   });
 };
 function extractNodesAndScene(gltf) {
@@ -202,6 +259,39 @@ function setupPhysicsObjects(physicsNode) {
     world.addBody(body);
   });
 }
+// 创建刚体物体升降器
+const Actuator = (position) => {
+  const size = 10;
+  bodyCom = new CANNON.Body({
+    mass: 0,
+    shape: new CANNON.Box(new CANNON.Vec3(size / 2, size / 2, size / 2)),
+    position: new CANNON.Vec3(...position),
+  });
+  world.addBody(bodyCom);
+
+  // 可视化网格（线框）
+  meshCom = new THREE.Mesh(
+    new THREE.BoxGeometry(size, size, size),
+    new THREE.MeshStandardMaterial({ wireframe: true, visible: false })
+  );
+  meshCom.position.copy(position);
+
+  // 状态
+  targetPosition = new THREE.Vector3(position[0], position[1], position[2]);
+  smoothPosition = new THREE.Vector3(...position);
+};
+const update = (delta, flag) => {
+  const targetY = flag ? -10 : -16;
+  targetPosition.y = targetY;
+
+  // 平滑阻尼
+  smoothPosition.y +=
+    (targetPosition.y - smoothPosition.y) * (1 - Math.exp(-10 * delta));
+
+  // 更新物理和渲染
+  bodyCom.position.copy(smoothPosition);
+  meshCom.position.copy(smoothPosition);
+};
 </script>
 
 <style lang="scss" scoped></style>
