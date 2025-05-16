@@ -17,13 +17,13 @@ const init = () => {
   scene = new THREE.Scene();
   // 创建相机
   camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
+    35, // fov - 视野角度
+    window.innerWidth / window.innerHeight, // 宽高比 - 通常设为窗口宽高比
+    0.1, // near - 近裁剪面
+    200 // far - 远裁剪面
   );
   // 设置相机位置
-  camera.position.set(0, 0, 5);
+  camera.position.set(0, 0, 60);
   // 创建渲染器
   renderer = new THREE.WebGLRenderer();
   // 设置渲染器大小
