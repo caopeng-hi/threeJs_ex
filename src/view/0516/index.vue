@@ -5,9 +5,23 @@
 <script setup>
 import { onMounted, ref } from "vue";
 // 导入Three.js核心库和Vue组合式API
-import * as THREE from "three"; // 导入轨道控制器
-let scene, camera, renderer, controls;
+import * as THREE from "three";
+import * as CANNON from "cannon-es";
+// 导入轨道控制器
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+// 导入GLTFLoader
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
+import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader";
+let scene, camera, renderer, controls, world;
 const canvasRef = ref(null);
+const ringAmount = 10;
+const tankSize = { x: 14, y: 12, z: 2 };
+const tankOffset = { x: 0, y: 6, z: 0 };
+const ringList = ref([]);
+// 存储所有刚体的数组
+const bodies = [];
+
 onMounted(() => {
   init();
   animate();
@@ -16,7 +30,7 @@ const init = () => {
   // 创建场景
   scene = new THREE.Scene();
   // 1. 加载 HDR 环境贴图
-  new THREE.RGBELoader().load("/img/tv_studio_small.hdr", (texture) => {
+  new RGBELoader().load("/img/tv_studio_small.hdr", (texture) => {
     // 2. 设置场景背景
     scene.background = texture;
 
@@ -44,7 +58,7 @@ const init = () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   // 将渲染器添加到DOM中
   canvasRef.value.appendChild(renderer.domElement);
-  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls = new OrbitControls(camera, renderer.domElement);
 
   // 1. 创建平行光
   const directionalLight = new THREE.DirectionalLight(0xffffff, 4);
@@ -70,6 +84,15 @@ const init = () => {
 
   // 6. 将光源添加到场景
   scene.add(directionalLight);
+  // 初始化物理世界
+  world = new CANNON.World({
+    gravity: new CANNON.Vec3(0, -9.82, 0),
+  });
+
+  // 创建rings
+  createRings();
+  // 加载模型
+  createModel();
 };
 const animate = () => {
   // 渲染场景和相机
@@ -77,7 +100,82 @@ const animate = () => {
   // 递归调用animate函数
   requestAnimationFrame(animate);
   controls.update();
+  world.step(1 / 60); // 更新物理世界
 };
+const createRings = () => {
+  for (let id = 0; id < ringAmount; id += 1) {
+    const position = [
+      Math.random() * tankSize.x - tankSize.x / 2 + tankOffset.x,
+      Math.random() * tankSize.y - tankSize.y / 2 + tankOffset.y,
+      Math.random() * tankSize.z - tankSize.z / 2 + tankOffset.z,
+    ];
+    const rotation = [
+      Math.random() * Math.PI,
+      Math.random() * Math.PI,
+      Math.random() * Math.PI,
+    ];
+    const colors = [0xee6688, 0x00dd44, 0x1122ff];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    ringList.value.push({ id, position, rotation, color });
+  }
+};
+const createModel = () => {
+  const gltfLoader = new GLTFLoader();
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath("./draco/");
+  dracoLoader.setDecoderConfig({ type: "js" });
+  dracoLoader.preload();
+  gltfLoader.setDRACOLoader(dracoLoader);
+  gltfLoader.load("/model/tank.glb", (gltf) => {
+    const { nodes, scene: tank } = extractNodesAndScene(gltf);
+    console.log(nodes, tank);
+  });
+};
+function extractNodesAndScene(gltf) {
+  const scene = gltf.scene;
+  const nodes = {};
+
+  // 递归遍历场景中的所有对象，按名称存储到 nodes 对象
+  scene.traverse((child) => {
+    if (child.name) {
+      nodes[child.name] = child;
+    }
+  });
+
+  return { nodes, scene };
+}
+// 遍历场景中的子对象，创建物理刚体
+function setupPhysicsObjects(scene) {
+  scene.children.forEach((obj) => {
+    // 1. 隐藏原始模型
+    obj.visible = false;
+
+    // 2. 创建物理刚体（盒子形状）
+    const size = new THREE.Vector3();
+    obj.getWorldScale(size); // 获取世界坐标系下的缩放
+    const halfExtents = new CANNON.Vec3(size.x, size.y, size.z); // Cannon.js 使用半边长
+
+    const body = new CANNON.Body({
+      mass: 0, // 静态物体
+      shape: new CANNON.Box(halfExtents),
+      position: new CANNON.Vec3(obj.position.x, obj.position.y, obj.position.z),
+      quaternion: new CANNON.Quaternion().setFromEuler(
+        obj.rotation.x,
+        obj.rotation.y,
+        obj.rotation.z
+      ),
+      material: new CANNON.Material({
+        friction: 0.01,
+        restitution: 0.2,
+      }),
+    });
+
+    // 3. 命名刚体并保存
+    body.name = obj.name;
+    bodies.push(body);
+    world.addBody(body);
+  });
+}
 </script>
 
 <style lang="scss" scoped></style>
